@@ -1,8 +1,10 @@
 #include "Game.h"
-
+#include<iostream>
 //constructor and destructor
+
 Game::Game(){
-	this->initEntity();
+	this->initEntity(XDIM, YDIM);
+	this->initEnemy(this->playerShape.getPosition().x - 20, this->playerShape.getPosition().y);
 	this->videoMode.height = 600;
 	this->videoMode.width = 800;
 	this->window = new sf::RenderWindow(this -> videoMode, "Smooth Operator", sf::Style::Titlebar | sf::Style::Close);
@@ -14,12 +16,18 @@ Game::~Game() {
 }
 
 //player initializer
-void Game::initEntity(float x, float y) {
-	this->shape.setSize(sf::Vector2f(50.f, 50.f));
-	this->shape.setFillColor(sf::Color::Cyan);
-	this->shape.setPosition(x, y);
+void Game::initEntity(const float x,const float y) {
+	this->playerShape.setSize(sf::Vector2f(50.f, 50.f));
+	this->playerShape.setFillColor(sf::Color::Cyan);
+	this->playerShape.setPosition(x, y);
 }
 
+//enemy initializer
+void Game::initEnemy(float x, float y) {
+	this->enemyShape.setRadius(35.f);
+	this->enemyShape.setFillColor(sf::Color::Red);
+	this->enemyShape.setPosition(x,y);
+}
 
 //runner drive
 const bool Game::running() const{
@@ -33,6 +41,7 @@ void Game::run() {
 		processEvents();
 		update(deltaTime);
 		render();
+		std::cout << "Time: " << this->playerShape.getPosition().x << '\n';
 	}
 }
 
@@ -61,37 +70,37 @@ void Game::processEvents()
 
 //user input handler
 void Game::userInput(sf::Keyboard::Key key, bool isPressed){
-	if (key == sf::Keyboard::W)
-		pressedW = isPressed;
-	else if (key == sf::Keyboard::A)
+	 if (key == sf::Keyboard::A)
 		pressedA = isPressed;
-	else if (key == sf::Keyboard::S)
-		pressedS = isPressed;
 	else if (key == sf::Keyboard::D)
 		pressedD = isPressed;
-	return;
 }
 
 
 //game logic
 void Game::update(sf::Time deltaTime){
-	sf::Vector2f movement(0.f, 0.f);
-	if (pressedW)
-		movement.y -= 1.f;
-	else if (pressedA)
-		movement.x -= 1.f;
-	else if (pressedS)
-		movement.y += 1.f;
+	const float acceleration = 10.f;
+	const float velocity = 50.f;
+	sf::Vector2f displacement(0.f, 0.f);
+	
+	if (pressedA)
+		displacement.x -= velocity * deltaTime.asSeconds() * acceleration; 
 	else if (pressedD)
-		movement.x += 1.f;
+		displacement.x += velocity * deltaTime.asSeconds() * acceleration;
 
-	this->shape.move(movement * deltaTime.asSeconds());
+	if (this->playerShape.getPosition().x > this->enemyShape.getPosition().x - this->playerShape.getSize().x)
+		this->enemyShape.move(5.f, 0);
+	else if (this->playerShape.getPosition().x < this->enemyShape.getPosition().x - this->playerShape.getSize().x)
+		this->enemyShape.move(-5.f, 0);
+	
+	this->playerShape.move(displacement);
 
 }
 
 //texture handler or renderer
 void Game::render(){
 	this->window->clear();
-	this->window->draw(this->shape);
+	this->window->draw(this->playerShape);
+	this->window->draw(this->enemyShape);
 	this->window->display();
 }
