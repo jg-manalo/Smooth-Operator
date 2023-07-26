@@ -1,38 +1,49 @@
+#include "dimension.h"
 #include "Game.h"
+#include "Hurdle.h"
 #include<iostream>
-//constructor and destructor
+#include<cstdlib>
+#include<array>
 
+
+//constructor and destructor
 Game::Game(){
-	this->initEntity(XDIM, YDIM);
-	//this->initEnemy(25.f, YDIM);
 	this->videoMode.height = 600;
 	this->videoMode.width = 800;
 	this->window = new sf::RenderWindow(this -> videoMode, "Smooth Operator",
 										sf::Style::Titlebar | sf::Style::Close);
-	this->view = sf::View(sf::FloatRect(0.f, 0.f, SCREEN_WIDTH, SCREEN_HEIGHT));
+
+	
 	this->window->setFramerateLimit(60);
+	noHurdle = true;
+	this->Hurdleizer();
+	this->initEntity(XDIM, YDIM);
+	
 }
 
 Game::~Game() {
+	delete this->hurdle;
 	delete this->window;
+	hurdle = nullptr;
+	window = nullptr;
 }
-
-
-
 
 //player initializer
 void Game::initEntity(const float x,const float y) {
 	this->playerShape.setSize(sf::Vector2f(100.f, 150.f));
-	car.loadFromFile("J:/devgame/graphics/car.png");
+	car.loadFromFile("graphics/car.png");
 	this->playerShape.setTexture(&car);
 	this->playerShape.setPosition(x, y);
 }
 
-//enemy initializer
-void Game::initEnemy(float x, float y) {
-	this->enemyShape.setSize(sf::Vector2f(50.f, 150.f));
-	this->enemyShape.setFillColor(sf::Color::Red);
-	this->enemyShape.setPosition(x,y);
+
+//background init
+void Game::renderBG() {
+	this->road.loadFromFile("J:/devgame/graphics/roadstar.jpg");
+	background.setPosition(0.f, bgy);
+	background2.setPosition(0.f, bg2y);
+	this->background.setTexture(road);
+	this->background2.setTexture(road);
 }
 
 //runner drive
@@ -85,8 +96,29 @@ void Game::userInput(sf::Keyboard::Key key, bool isPressed){
 }
 
 
-static float bgy = 0.f;
-static float bg2y = -600.f;
+//randomizing location of coordinates
+Coordinate Game::randomizer() {
+	Coordinate result;
+
+	std::array<float, 3> xCoord = { 200.f , 100.f, 300.f };
+	std::array<float, 3> yCoord = { 0.f , 20.f, 40.f };
+
+	int selectX = std::rand() % 3;
+	int selectY = std::rand() % 3;
+
+	result.x = xCoord[selectX];
+	result.y = yCoord[selectY];
+	return result;
+}
+
+void Game::Hurdleizer(){
+	if (noHurdle) {
+		Coordinate coordinate = randomizer();
+		hurdle = new Hurdle(coordinate.x, coordinate.y);
+		noHurdle = false;
+	}
+}
+
 //game logic
 void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight){
 	const float acceleration = 10.f;
@@ -103,15 +135,20 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 	const sf::Vector2f enemySize = this->enemyShape.getSize();
 
 
-
 	if (pressedJ) {
+		float dy = 0;
 		bgy += velocity * deltaTime.asSeconds() * acceleration;
 		bg2y += velocity * deltaTime.asSeconds() * acceleration;
+		dy +=velocity * deltaTime.asSeconds() * acceleration;
+
 		if (pressedA)
 			dx -= velocity / 2 * deltaTime.asSeconds() * acceleration;
 		else if (pressedD)
 			dx += velocity / 2 * deltaTime.asSeconds() * acceleration;
+
+		hurdle->hurdleShape.move(0, dy);
 	}
+
 	else {
 		velocity -= 2.f;
 	}
@@ -126,21 +163,25 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 	else if (playerBounds.left > screenWidth - playerSize.x)
 		dx = screenWidth - playerSize.x - playerBounds.left;
 	
+
+	if (hurdle->hurdleShape.getPosition().y > playerPos.y) {
+		Coordinate newCoord = randomizer();
+		hurdle->hurdleShape.setPosition(newCoord.x, 0.f);
+	}
 	//character movement
 	this->playerShape.move(dx, dy);
 	
+	
 }
 
-//texture handler or renderer
+
+//renderer
 void Game::render(){
 	this->window->clear();
-	this->road.loadFromFile("J:/devgame/graphics/roadstar.jpg");
-	background.setPosition(0.f, bgy);
-	background2.setPosition(0.f, bg2y);
-	this->background.setTexture(road);
-	this->background2.setTexture(road);
-	this->window->draw(background);
-	this->window->draw(background2);
+	renderBG();
+	this->window->draw(this->background);
+	this->window->draw(this->background2);
 	this->window->draw(this->playerShape);
+	this->window->draw(hurdle->hurdleShape);
 	this->window->display();
 }

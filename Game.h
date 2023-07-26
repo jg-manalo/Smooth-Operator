@@ -1,5 +1,12 @@
 #pragma once
+#include "Hurdle.h"
 #include <SFML/Graphics.hpp>
+#include <array>
+
+struct Coordinate{
+	float x;
+	float y;
+};
 
 class Game
 {
@@ -8,8 +15,6 @@ private:
 	sf::RenderWindow* window;
 	sf::VideoMode videoMode;
 	sf::Event event;
-	sf::View view;
-
 
 	//player var
 	sf::RectangleShape playerShape;
@@ -19,27 +24,33 @@ private:
 	bool pressedA;	
 	bool pressedD;
 	bool pressedJ;
+	
+	//bool for hurdle creation
+	bool noHurdle;
+	
+	//Road bg
+	sf::Texture road;
+	sf::Sprite background;
+	sf::Sprite background2;
+	
 
+	//bg init
+	void renderBG();
+	
 	//player init
 	void initEntity(const float x, const float y);
 	sf::Texture car;
 	//enemy init
-	void initEnemy(float x, float y);
+	
 
 	//private func
 	void processEvents();
 	void update(sf::Time deltaTime, const float screenWidth, const float screenHeight);
 	void render();
-
+	Coordinate randomizer();
+	void Hurdleizer();
+	
 public:
-	//positioning default initializer computation ang salaula
-	const float SCREEN_HEIGHT = 600.f;
-	const float SCREEN_WIDTH = 800.f;
-	const float SCREEN_WIDTH_HALVED  = 800.f / 2.f;
-	const float SCREEN_HEIGHT_HALVED = 600.f / 2.f;
-	const float XDIM = SCREEN_WIDTH_HALVED  - 50.f;
-	const float YDIM = SCREEN_HEIGHT_HALVED - 50.f + 200;
-
 	//constructor/destructor
 	Game();
 	virtual ~Game();
@@ -51,11 +62,5 @@ public:
 	void userInput(sf::Keyboard::Key key, bool isPressed);
 	void run();
 
-	//Road bg
-	sf::Texture road;
-	sf::Sprite background;
-	sf::Sprite background2;
-
-
+	Hurdle* hurdle;
 };
-
