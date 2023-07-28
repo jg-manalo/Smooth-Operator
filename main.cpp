@@ -10,5 +10,6 @@ int main()
 	while (game.running()) {
 		game.run();
 	}
+	std::cout << "Score: " << game.score;
 	return EXIT_SUCCESS;
 }

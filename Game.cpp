@@ -4,10 +4,11 @@
 #include<iostream>
 #include<cstdlib>
 #include<array>
+#include<Windows.h>
 
 
 //constructor and destructor
-Game::Game(){
+Game::Game() : acceleration{ 10.f }, dx{ 0.f }, dy{ 0.f }, velocity{ 50.f } {
 	this->videoMode.height = 600;
 	this->videoMode.width = 800;
 	this->window = new sf::RenderWindow(this -> videoMode, "Smooth Operator",
@@ -15,9 +16,8 @@ Game::Game(){
 
 	
 	this->window->setFramerateLimit(60);
-	noHurdle = true;
-	this->Hurdleizer();
-	this->initEntity(XDIM, YDIM);
+	this->hurdle = new Hurdle();
+	this->player = new Player();
 	
 }
 
@@ -37,13 +37,13 @@ void Game::initEntity(const float x,const float y) {
 }
 
 
+
 //background init
 void Game::renderBG() {
-	this->road.loadFromFile("J:/devgame/graphics/roadstar.jpg");
+	this->road.loadFromFile("graphics/roadstar.jpg");
 	background.setPosition(0.f, bgy);
 	background2.setPosition(0.f, bg2y);
 	this->background.setTexture(road);
-	this->background2.setTexture(road);
 }
 
 //runner drive
@@ -56,6 +56,10 @@ void Game::run() {
 	while (running()) {
 		sf::Time deltaTime = clock.restart();
 		processEvents();
+		if (noHurdle) {
+			this->hurdle = new Hurdle();
+			noHurdle = false;
+		}
 		update(deltaTime,SCREEN_WIDTH, SCREEN_HEIGHT);
 		render();
 		
@@ -125,53 +129,58 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 	float velocity = 50.f;
 	float dx = 0.f;
 	float dy = 0.f;
-	sf::Vector2f playerPos = this->playerShape.getPosition();
-	sf::FloatRect playerBounds = this->playerShape.getGlobalBounds();
+	
+	sf::Vector2f playerPos = this->player->playerShape.getPosition();
+	sf::FloatRect playerBounds = this->player->playerShape.getGlobalBounds();
+	sf::FloatRect enemyBounds = this->hurdle->hurdleShape.getGlobalBounds();
+	const sf::Vector2f playerSize = this->player->playerShape.getSize();
 
-	sf::Vector2f enemyPos = this->enemyShape.getPosition();
-	sf::FloatRect enemyBounds = this->enemyShape.getGlobalBounds();
-
-	const sf::Vector2f playerSize = this->playerShape.getSize();
-	const sf::Vector2f enemySize = this->enemyShape.getSize();
-
-
-	if (pressedJ) {
-		float dy = 0;
+	if (pressedJ){
+		float dy = 0.f;
 		bgy += velocity * deltaTime.asSeconds() * acceleration;
 		bg2y += velocity * deltaTime.asSeconds() * acceleration;
-		dy +=velocity * deltaTime.asSeconds() * acceleration;
+		dy += velocity / 8 * deltaTime.asSeconds() * acceleration;
 
 		if (pressedA)
-			dx -= velocity / 2 * deltaTime.asSeconds() * acceleration;
+			dx -= velocity * deltaTime.asSeconds() * acceleration;
 		else if (pressedD)
-			dx += velocity / 2 * deltaTime.asSeconds() * acceleration;
+			dx += velocity * deltaTime.asSeconds() * acceleration;
 
-		hurdle->hurdleShape.move(0, dy);
+		this->hurdle->hurdleShape.move(0, dy);
 	}
 
 	else {
 		velocity -= 2.f;
 	}
 
-	//bounds checker
+	//background scrolling animation
 	if (bg2y > 0) {
 		bgy = 0;
 		bg2y = bgy - 500.f;
 	}
+	
 	if (playerBounds.left + dx < 0)
 		dx = -playerBounds.left;
 	else if (playerBounds.left > screenWidth - playerSize.x)
 		dx = screenWidth - playerSize.x - playerBounds.left;
 	
 
+	//window collision checker for the hurdle
 	if (hurdle->hurdleShape.getPosition().y > playerPos.y) {
 		Coordinate newCoord = randomizer();
 		hurdle->hurdleShape.setPosition(newCoord.x, 0.f);
 	}
-	//character movement
-	this->playerShape.move(dx, dy);
-	
-	
+
+
+	//collision detection
+	if (playerBounds.intersects(enemyBounds)) {
+		//std::cout << "Collided,crash\n";
+		//dx += (velocity / 10.f * 3.f) * deltaTime.asSeconds() * (acceleration * 2.f);
+		this->window->close();
+	}
+
+	//default character movement
+	this->player->playerShape.move(dx, dy);
 }
 
 
@@ -181,7 +190,7 @@ void Game::render(){
 	renderBG();
 	this->window->draw(this->background);
 	this->window->draw(this->background2);
-	this->window->draw(this->playerShape);
-	this->window->draw(hurdle->hurdleShape);
+    this->window->draw(hurdle->hurdleShape);
+	this->window->draw(player->playerShape);
 	this->window->display();
 }
