@@ -1,6 +1,7 @@
 #pragma once
 #include "Player.h"
 #include "Hurdle.h"
+#include "Player.h"
 #include <SFML/Graphics.hpp>
 #include <array>
 
@@ -14,31 +15,61 @@ private:
 	sf::Event event;
 
 	//boolean var for user input
+<<<<<<< Updated upstream
+	bool pressedA;	
+	bool pressedD;
+	bool pressedJ;
+	
+	//bool for hurdle creation
+	bool noHurdle;
+	
+	//Road bg
+=======
 	bool pressedA = false;	
 	bool pressedD = false;
 	bool pressedJ = false;
-
-	
-	//Road bg
+	bool crashed = false;
+	bool celebrating = false;
+	//Road background
+>>>>>>> Stashed changes
 	sf::Texture road;
 	sf::Sprite background;
 	sf::Sprite background2;
 	
 
-	//bg init
-	void renderBG();
-	
 	//player init
-	Player* player = nullptr;
-	
+	void initEntity(const float x, const float y);
+	sf::Texture car;
 	//enemy init
+<<<<<<< Updated upstream
+	
+=======
 	Hurdle* hurdle = nullptr;
+	bool noHurdle = true;
+
+	//audio
+	sf::SoundBuffer buffer;
+	sf::Sound crash;
+
+	sf::Music music;
+	
+	//physics
+	const float acceleration;
+	float velocity;
+	float dx;
+	float dy;
+
+>>>>>>> Stashed changes
 
 	//private func
 	void processEvents();
 	void update(sf::Time deltaTime, const float screenWidth, const float screenHeight);
 	void render();
-	
+<<<<<<< Updated upstream
+	Coordinate randomizer();
+	void Hurdleizer();
+=======
+>>>>>>> Stashed changes
 	
 public:
 	//constructor/destructor
@@ -52,5 +83,10 @@ public:
 	void userInput(sf::Keyboard::Key key, bool isPressed);
 	void run();
 
+<<<<<<< Updated upstream
+	Hurdle* hurdle;
+=======
+	unsigned long int score = 0;
 	
+>>>>>>> Stashed changes
 };

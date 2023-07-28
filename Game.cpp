@@ -1,10 +1,11 @@
 #include "dimension.h"
 #include "Game.h"
 #include "Hurdle.h"
+#include "dimension.h"
+#include"Game.h"
+#include "Player.h"
 #include<iostream>
 #include<random>
-#include<array>
-
 
 //constructor and destructor
 Game::Game(){
@@ -28,15 +29,11 @@ Game::~Game() {
 }
 
 
-
-
 //background init
 void Game::renderBG() {
 	this->road.loadFromFile("graphics/roadstar.jpg");
-	background.setPosition(0.f, bgy);
-	background2.setPosition(0.f, bg2y);
+	background.setPosition(0.f, background2_Y);
 	this->background.setTexture(road);
-	this->background2.setTexture(road);
 }
 
 //runner drive
@@ -49,11 +46,15 @@ void Game::run() {
 	while (running()) {
 		sf::Time deltaTime = clock.restart();
 		processEvents();
+		if (hurdle->noHurdle) {
+			this->hurdle = new Hurdle();
+			hurdle->noHurdle = false;
+		}
 		update(deltaTime,SCREEN_WIDTH, SCREEN_HEIGHT);
 		render();
 		
-	}
 }
+
 
 //event handler
 void Game::processEvents()
@@ -89,6 +90,22 @@ void Game::userInput(sf::Keyboard::Key key, bool isPressed){
 }
 
 
+
+//randomizing location of coordinates
+Coordinate Hurdle::randomizer() {
+	Coordinate result;
+
+	std::array<float, 3> xCoord = { 200.f , 100.f, 300.f };
+	std::array<float, 3> yCoord = { 0.f , 20.f, 40.f };
+
+	int selectX = std::rand() % 3;
+	int selectY = std::rand() % 3;
+
+	result.x = xCoord[selectX];
+	result.y = yCoord[selectY];
+	return result;
+}
+
 //game logic
 void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight){
 	const float acceleration = 10.f;
@@ -96,15 +113,15 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 	float dx = 0.f;
 	float dy = 0.f;
 	
-	sf::Vector2f playerPos = this->player->playerShape.getPosition();
-	sf::FloatRect playerBounds = this->player->playerShape.getGlobalBounds();
-	sf::FloatRect enemyBounds = this->hurdle->hurdleShape.getGlobalBounds();
-	const sf::Vector2f playerSize = this->player->playerShape.getSize();
+	sf::Vector2f playerPos = player->playerShape.getPosition();
+	sf::FloatRect playerBounds = player->playerShape.getGlobalBounds();
+	sf::FloatRect enemyBounds = hurdle->hurdleShape.getGlobalBounds();
+	const sf::Vector2f playerSize = player->playerShape.getSize();
 
 	if (pressedJ){
 		float dy = 0.f;
-		bgy += velocity * deltaTime.asSeconds() * acceleration;
-		bg2y += velocity * deltaTime.asSeconds() * acceleration;
+		
+		background2_Y += velocity * deltaTime.asSeconds() * acceleration;
 		dy += velocity / 8 * deltaTime.asSeconds() * acceleration;
 
 		if (pressedA)
@@ -117,9 +134,8 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 
 
 	//background scrolling animation
-	if (bg2y > 0) {
-		bgy = 0;
-		bg2y = bgy - 500.f;
+	if (background2_Y > 0) {
+		background2_Y = -screenHeight;
 	}
 	
 	if (playerBounds.left + dx < 0)
@@ -129,15 +145,16 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 	
 
 	if (hurdle->hurdleShape.getPosition().y > playerPos.y) {
+
 		Coordinate reset = this->hurdle->randomizer();
 		this->hurdle->hurdleShape.setPosition(reset.x, reset.y);
 	}
 
-
 	//collision detection
 	if (playerBounds.intersects(enemyBounds)) {
-		//std::cout << "Collided,crash\n";
-		//dx += (velocity / 10.f * 3.f) * deltaTime.asSeconds() * (acceleration * 2.f);
+		this->buffer.loadFromFile("sounds/congtv.mp3");
+		this->crash.setBuffer(buffer);
+		this->crash.play();
 		this->window->close();
 	}
 
@@ -151,7 +168,6 @@ void Game::render(){
 	this->window->clear();
 	renderBG();
 	this->window->draw(this->background);
-	this->window->draw(this->background2);
     this->window->draw(hurdle->hurdleShape);
 	this->window->draw(player->playerShape);
 	this->window->display();
