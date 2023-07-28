@@ -6,13 +6,18 @@
 
 //constructor and destructor
 Game::Game() {
+
+
+//constructor and destructor
+Game::Game(){
 	this->videoMode.height = 600;
 	this->videoMode.width = 800;
 	this->window = new sf::RenderWindow(this -> videoMode, "Smooth Operator",
 										sf::Style::Titlebar | sf::Style::Close);
 	this->window->setFramerateLimit(60);
-	this->hurdle = new Hurdle();
-	this->player = new Player();
+	noHurdle = true;
+	this->Hurdleizer();
+	this->initEntity(XDIM, YDIM);
 	
 }
 
@@ -28,9 +33,16 @@ Game::~Game() {
 void Game::renderBG() {
 	this->road.loadFromFile("graphics/roadstar.jpg");
 	background.setPosition(0.f, background2_Y);
-	this->background.setTexture(road);
-	this->background2.setTexture(road);
+//player initializer
+void Game::initEntity(const float x,const float y) {
+	this->playerShape.setSize(sf::Vector2f(100.f, 150.f));
+	car.loadFromFile("graphics/car.png");
+	this->playerShape.setTexture(&car);
+	this->playerShape.setPosition(x, y);
 }
+
+
+
 
 //runner drive
 const bool Game::running() const {
@@ -104,11 +116,7 @@ Coordinate Hurdle::randomizer() {
 
 //game logic
 void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight) {
-	const float acceleration = 10.f;
-	float velocity = 50.f;
-	float dx = 0.f;
-	float dy = 0.f;
-	
+
 	sf::Vector2f playerPos = player->playerShape.getPosition();
 	sf::FloatRect playerBounds = player->playerShape.getGlobalBounds();
 	sf::FloatRect enemyBounds = hurdle->hurdleShape.getGlobalBounds();
@@ -119,7 +127,6 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 		
 		background2_Y += velocity * deltaTime.asSeconds() * acceleration;
 		dy += velocity / 8 * deltaTime.asSeconds() * acceleration;
-
 		if (pressedA)
 			dx -= velocity / 2 * deltaTime.asSeconds() * acceleration;
 		else if (pressedD)
@@ -132,13 +139,11 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 	//background scrolling animation
 	if (background2_Y > 0) {
 		background2_Y = -screenHeight;
-	}
-	
+
 	if (playerBounds.left + dx < 0)
 		dx = -playerBounds.left;
 	else if (playerBounds.left > screenWidth - playerSize.x)
 		dx = screenWidth - playerSize.x - playerBounds.left;
-
 
 	if (hurdle->hurdleShape.getPosition().y > playerPos.y) {
 
@@ -156,6 +161,13 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 
 	//default character movement
 	this->player->playerShape.move(dx, dy);
+	if (hurdle->hurdleShape.getPosition().y > playerPos.y) {
+		Coordinate newCoord = randomizer();
+		hurdle->hurdleShape.setPosition(newCoord.x, 0.f);
+	}
+	//character movement
+	this->playerShape.move(dx, dy);
+	
 }
 
 
