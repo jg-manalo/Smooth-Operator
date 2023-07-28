@@ -1,23 +1,22 @@
 #include "dimension.h"
 #include "Game.h"
+#include "Player.h"
 #include "Hurdle.h"
 #include<iostream>
-#include<random>
+#include <Windows.h>
+#include<SFML/Graphics.hpp>
+#include<SFML/Audio.hpp>
 
 //constructor and destructor
-Game::Game() {
-
-
-//constructor and destructor
-Game::Game(){
+Game::Game() :  velocity{ 50.f }, acceleration{ 10.f }, dx{ 0.f }, dy { 0.f } {
 	this->videoMode.height = 600;
 	this->videoMode.width = 800;
 	this->window = new sf::RenderWindow(this -> videoMode, "Smooth Operator",
 										sf::Style::Titlebar | sf::Style::Close);
 	this->window->setFramerateLimit(60);
-	noHurdle = true;
-	this->Hurdleizer();
-	this->initEntity(XDIM, YDIM);
+	this->player = new Player();
+	this->hurdle = new Hurdle();
+
 	
 }
 
@@ -32,20 +31,12 @@ Game::~Game() {
 //background init
 void Game::renderBG() {
 	this->road.loadFromFile("graphics/roadstar.jpg");
+	this->background.setTexture(road);
 	background.setPosition(0.f, background2_Y);
-//player initializer
-void Game::initEntity(const float x,const float y) {
-	this->playerShape.setSize(sf::Vector2f(100.f, 150.f));
-	car.loadFromFile("graphics/car.png");
-	this->playerShape.setTexture(&car);
-	this->playerShape.setPosition(x, y);
 }
 
-
-
-
 //runner drive
-const bool Game::running() const {
+const bool Game::running() const{
 	return this->window->isOpen();
 }
 
@@ -54,36 +45,30 @@ void Game::run() {
 	while (running()) {
 		sf::Time deltaTime = clock.restart();
 		processEvents();
-		if (hurdle->noHurdle) {
-			this->hurdle = new Hurdle();
-			hurdle->noHurdle = false;
-		}
-		update(deltaTime,SCREEN_WIDTH, SCREEN_HEIGHT);
+		update(deltaTime, SCREEN_WIDTH, SCREEN_HEIGHT);
 		render();
-		
+	}
 }
 
-
 //event handler
-void Game::processEvents()
-{
+void Game::processEvents(){
 	while (this->window->pollEvent(this->event)) {
 		switch (this->event.type) {
-
-		case sf::Event::Closed:
-			this->window->close();
-			break;
-		case sf::Event::KeyPressed:
-			if (this->event.key.code == sf::Keyboard::Escape)
+			case sf::Event::Closed:
 				this->window->close();
-			userInput(event.key.code, true);
-			break;
-		case sf::Event::KeyReleased:
-			if (this->event.key.code == sf::Keyboard::Escape)
-				this->window->close();
-			userInput(event.key.code, false);
-			break;
-		}
+				break;
+			case sf::Event::KeyPressed:
+				if (this->event.key.code == sf::Keyboard::Escape) {
+					this->window->close();
+				}
+					userInput(event.key.code, true);
+					break;
+			case sf::Event::KeyReleased:
+				if (this->event.key.code == sf::Keyboard::Escape)
+					this->window->close();
+				userInput(event.key.code, false);
+				break;
+			}
 	}
 }
 
@@ -95,28 +80,15 @@ void Game::userInput(sf::Keyboard::Key key, bool isPressed) {
 		pressedD = isPressed;
 	else if (key == sf::Keyboard::J)
 		pressedJ = isPressed;
+	else if (key == sf::Keyboard::K)
+		pressedK = isPressed;
+
+	
 }
 
-
-
-//randomizing location of coordinates
-Coordinate Hurdle::randomizer() {
-	Coordinate result;
-
-	std::array<float, 3> xCoord = { 200.f , 100.f, 300.f };
-	std::array<float, 3> yCoord = { 0.f , 20.f, 40.f };
-
-	int selectX = std::rand() % 3;
-	int selectY = std::rand() % 3;
-
-	result.x = xCoord[selectX];
-	result.y = yCoord[selectY];
-	return result;
-}
 
 //game logic
-void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight) {
-
+void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight){
 	sf::Vector2f playerPos = player->playerShape.getPosition();
 	sf::FloatRect playerBounds = player->playerShape.getGlobalBounds();
 	sf::FloatRect enemyBounds = hurdle->hurdleShape.getGlobalBounds();
@@ -124,29 +96,32 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 
 	if (pressedJ){
 		float dy = 0.f;
-		
-		background2_Y += velocity * deltaTime.asSeconds() * acceleration;
+		background2_Y += (velocity++) * deltaTime.asSeconds() * acceleration;
 		dy += velocity / 8 * deltaTime.asSeconds() * acceleration;
 		if (pressedA)
-			dx -= velocity / 2 * deltaTime.asSeconds() * acceleration;
+			dx -= acceleration * deltaTime.asSeconds();
 		else if (pressedD)
-			dx += velocity / 2 * deltaTime.asSeconds() * acceleration;
-
+			dx += acceleration * deltaTime.asSeconds();
 		hurdle->hurdleShape.move(0, dy);
 	}
-
+	else if (pressedK){
+		dx = 0.f;
+		background2_Y += (velocity--) * deltaTime.asSeconds() * acceleration;
+	}
+	else {
+		velocity = 50.f;
+	}
 
 	//background scrolling animation
-	if (background2_Y > 0) {
+	if (background2_Y > 0)
 		background2_Y = -screenHeight;
-
+	
 	if (playerBounds.left + dx < 0)
 		dx = -playerBounds.left;
 	else if (playerBounds.left > screenWidth - playerSize.x)
 		dx = screenWidth - playerSize.x - playerBounds.left;
 
 	if (hurdle->hurdleShape.getPosition().y > playerPos.y) {
-
 		Coordinate reset = this->hurdle->randomizer();
 		this->hurdle->hurdleShape.setPosition(reset.x, reset.y);
 	}
@@ -159,15 +134,12 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 		this->window->close();
 	}
 
-	//default character movement
-	this->player->playerShape.move(dx, dy);
 	if (hurdle->hurdleShape.getPosition().y > playerPos.y) {
-		Coordinate newCoord = randomizer();
+		Coordinate newCoord = this->hurdle->randomizer();
 		hurdle->hurdleShape.setPosition(newCoord.x, 0.f);
 	}
 	//character movement
-	this->playerShape.move(dx, dy);
-	
+	this->player->playerShape.move(dx, dy);
 }
 
 

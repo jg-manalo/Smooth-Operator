@@ -1,10 +1,16 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+
+struct Coordinate {
+	float x;
+	float y;
+};
+
 class Hurdle{
 public:
-	Hurdle(float x, float y);
+	Hurdle();
 	sf::Texture hurdle;
 	sf::RectangleShape hurdleShape;
-private:
+	Coordinate randomizer();
 };
 
