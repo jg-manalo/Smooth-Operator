@@ -42,6 +42,10 @@ private:
 	sf::SoundBuffer buffer;
 	sf::Sound crash;
 	sf::Music music;
+
+
+	//score
+	unsigned long int score;
 public:
 	//constructor/destructor
 	Game();
