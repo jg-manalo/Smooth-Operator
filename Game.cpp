@@ -14,13 +14,13 @@ Game::Game() : velocity{ 0.f }, acceleration{ 10.f }, dx{ 0.f }, dy{ 0.f }, scor
 	this->window = new sf::RenderWindow(this -> videoMode, "Smooth Operator",
 										sf::Style::Titlebar | sf::Style::Close);
 	this->window->setFramerateLimit(60);
-	this->player = new Player();
-	this->hurdle = new Hurdle();
+	this->player  = new Player();
+	this->hurdle  = new Hurdle();
 	this->music.openFromFile("sounds/cimh.mp3");
-	this->music.play();
 }
 
 Game::~Game() {
+	delete this->player;
 	delete this->hurdle;
 	delete this->window;
 	hurdle = nullptr;
@@ -36,17 +36,17 @@ void Game::renderBG() {
 }
 
 //runner drive
-const bool Game::running() const{
+const bool Game::isRunning() const{
 	return this->window->isOpen();
 }
 
 void Game::run() {
 	sf::Clock clock;
-	while (running()) {
+	while (isRunning()) {
 		sf::Time deltaTime = clock.restart();
 		processEvents();
 		update(deltaTime, SCREEN_WIDTH, SCREEN_HEIGHT);
-		render();
+		renderAll();
 	}
 }
 
@@ -90,25 +90,26 @@ void Game::userInput(sf::Keyboard::Key key, bool isPressed) {
 //game logic
 void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight){
 	sf::Vector2f playerPos = player->playerShape.getPosition();
+	sf::Vector2f hurdlePos = hurdle->hurdleShape.getPosition();
 	sf::FloatRect playerBounds = player->playerShape.getGlobalBounds();
 	sf::FloatRect enemyBounds = hurdle->hurdleShape.getGlobalBounds();
 	const sf::Vector2f playerSize = player->playerShape.getSize();
-	bool drivingState;
-	bool audioNotPlay = false;
 
 
 	if (pressedJ){
-		float dy = 0.f;
-		velocity++;
-		if (velocity > 250.f) velocity = 250.f;
-		background2_Y += (velocity) * deltaTime.asSeconds() * acceleration;
+		bool inMaxVelocity = velocity > 250.f;
+		float dy = 0.f; //makes the delta y into 0 so that the player's delta y is not affected
+		background2_Y += (velocity) * deltaTime.asSeconds() * acceleration; // movement of the background
 		dy += velocity / 8 * deltaTime.asSeconds() * acceleration;
+		velocity++;
+		
+		if (inMaxVelocity) velocity = 250.f;
 		if (pressedA)
 			dx -= acceleration * deltaTime.asSeconds();
 		else if (pressedD)
 			dx += acceleration * deltaTime.asSeconds();
-		hurdle->hurdleShape.move(0, dy);
-		score += 20;
+		hurdle->hurdleShape.move(dx / 16.f, dy);
+		score += 25;
 	}
 	else{
 		if (pressedK) {
@@ -118,7 +119,7 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 		velocity--;
 		if (velocity < 0) velocity = 0.f;
 		background2_Y += (velocity)*deltaTime.asSeconds() * acceleration;
-		hurdle->hurdleShape.move(0, dy);
+		
 	}
 
 	//background scrolling animation
@@ -130,7 +131,7 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 	else if (playerBounds.left > screenWidth - playerSize.x)
 		dx = screenWidth - playerSize.x - playerBounds.left;
 
-	if (hurdle->hurdleShape.getPosition().y > playerPos.y) {
+	if (hurdlePos.y > screenHeight) {
 		Coordinate reset = this->hurdle->randomizer();
 		this->hurdle->hurdleShape.setPosition(reset.x, reset.y);
 	}
@@ -147,11 +148,24 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 
 	//character movement
 	this->player->playerShape.move(dx, dy);
+
+	if (score == 900) {
+		this->music.play();
+		this->music.setRelativeToListener(true);
+		this->music.setVolume(5.f);
+	}
+
+	//kung nagddrive ba
+	if (velocity == 5.f) {
+		player->drivingSound();
+	}
+	else if (velocity == 0.f) {
+		player->drivingSoundStop();
+	}
 }
 
-
 //renderer
-void Game::render() {
+void Game::renderAll() {
 	this->window->clear();
 	renderBG();
 	this->window->draw(this->background);

@@ -7,8 +7,7 @@
 
 class Game
 {
-private:
-	//private var
+private: //variables
 	sf::RenderWindow* window;
 	sf::VideoMode videoMode;
 	sf::Event event;
@@ -29,34 +28,28 @@ private:
 	sf::Texture road;
 	sf::Sprite background;
 	
-
-	//bg init
-	void renderBG();
-	
-	//private func
-	void processEvents();
-	void update(sf::Time deltaTime, const float screenWidth, const float screenHeight);
-	void render();
-	
 	//audio
 	sf::SoundBuffer buffer;
 	sf::Sound crash;
 	sf::Music music;
 
-
+	Hurdle* hurdle; //object for hurdle
+	Player* player; //object for player
+	Hurdle* hurdle2; //another one
 	//score
 	unsigned long int score;
-public:
-	//constructor/destructor
+private: 
+	void processEvents();
+	void update(sf::Time deltaTime, const float screenWidth, const float screenHeight);
+	void renderBG();
+	void renderAll(); // main renderer
+	
+public: //constructor/destructor
 	Game();
 	virtual ~Game();
 
 	//to check whether the game is running
-	const bool running() const;
-	
+	const bool isRunning() const;
 	void userInput(sf::Keyboard::Key key, bool isPressed); //checked if there any input from user
 	void run(); 
-
-	Hurdle* hurdle; //object for hurdle
-	Player* player; //object for player
 };

@@ -7,7 +7,7 @@ int main()
 {
 	Game game;
 
-	while (game.running()) {
+	while (game.isRunning()) {
 		game.run();
 	}
 	return EXIT_SUCCESS;

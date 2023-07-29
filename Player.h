@@ -4,11 +4,12 @@
 class Player
 {
 public:
-	Player();
 	sf::Texture car;
 	sf::RectangleShape playerShape;
-	void drivingSound(bool& drivingState);
-	void drivingSoundStop(bool& drivingState);
+public:
+	Player();
+	void drivingSound();
+	void drivingSoundStop();
 private:
 	sf::SoundBuffer buffer;
 	sf::Sound driving;

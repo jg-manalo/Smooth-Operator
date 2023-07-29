@@ -9,18 +9,16 @@ Player::Player()
 	this->playerShape.setPosition(XDIM, YDIM);
 }
 
-void Player::drivingSound(bool& drivingState)
+void Player::drivingSound()
 {
 	buffer.loadFromFile("sounds/broom.mp3");
 	driving.setBuffer(buffer);
-	if (drivingState == 1) {
-		driving.play();
-	}
+	driving.play();
+	driving.setVolume(100.f);
+	driving.setLoop(true);
 }
 
-void Player::drivingSoundStop(bool& drivingState)
+void Player::drivingSoundStop()
 {
-	if (drivingState == 0) {
-		driving.stop();
-	}
+	driving.pause();
 }
