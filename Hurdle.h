@@ -11,7 +11,6 @@ public:
 	Hurdle();
 	sf::Texture hurdle;
 	sf::RectangleShape hurdleShape;
-public:
 	Coordinate randomizer();
 };
 

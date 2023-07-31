@@ -3,22 +3,35 @@
 #include "Player.h"
 #include "Hurdle.h"
 #include<iostream>
+#include <sstream>
 #include <Windows.h>
 #include<SFML/Graphics.hpp>
 #include<SFML/Audio.hpp>
 
 //constructor and destructor
-Game::Game() : velocity{ 0.f }, acceleration{ 10.f }, dx{ 0.f }, dy{ 0.f }, score{ 0 } {
+Game::Game() : speed{ 0.f }, acceleration{ 10.f }, dx{ 0.f }, dy{ 0.f }, score{ 0 }, musicVol{ 0.f } {
 	this->videoMode.height = 600;
 	this->videoMode.width = 800;
 	this->window = new sf::RenderWindow(this -> videoMode, "Smooth Operator",
 										sf::Style::Titlebar | sf::Style::Close);
 	this->window->setFramerateLimit(60);
+	this->player = new Player();
+	this->hurdle = new Hurdle();
 	this->music.openFromFile("sounds/cimh.mp3");
+	this->font.loadFromFile("fonts/racing.ttf");
+	this->scoreCard.setFont(font);
+	this->speedometer.setFont(font);
+	this->speedometer.setPosition(SCREEN_HEIGHT, 0.f);
+	this->scoreCard.setPosition(50.f, 0.f);
+	
 }
 
-Game::~Game() {	
+Game::~Game() {
+	delete this->player;
+	delete this->hurdle;
 	delete this->window;
+	player = nullptr;
+	hurdle = nullptr;
 	window = nullptr;
 }
 
@@ -31,13 +44,13 @@ void Game::renderBG() {
 }
 
 //runner drive
-const bool Game::isRunning() const{
+const bool Game::running() const{
 	return this->window->isOpen();
 }
 
 void Game::run() {
 	sf::Clock clock;
-	while (isRunning()) {
+	while (running()) {
 		sf::Time deltaTime = clock.restart();
 		processEvents();
 		update(deltaTime, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -81,39 +94,62 @@ void Game::userInput(sf::Keyboard::Key key, bool isPressed) {
 	
 }
 
+//displaying score
+void Game::renderScoreCard(){
+	std::stringstream scoreDisplay;
+	scoreDisplay << "Score: " << score;
+	this->scoreCard.setString(scoreDisplay.str());
+}
+
+//displaying speed
+void Game::renderSpeedometer() {
+	std::stringstream speedDisplay;
+	speedDisplay << "Speed: " << speed << " kph";
+	this->speedometer.setString(speedDisplay.str());
+}
 
 //game logic
 void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight){
 	sf::Vector2f playerPos = player->playerShape.getPosition();
-	sf::Vector2f hurdlePos = hurdle->hurdleShape.getPosition();
 	sf::FloatRect playerBounds = player->playerShape.getGlobalBounds();
 	sf::FloatRect enemyBounds = hurdle->hurdleShape.getGlobalBounds();
 	const sf::Vector2f playerSize = player->playerShape.getSize();
 
+	if (score == 1000) {
+		this->music.play();
+		this->music.setVolume(0);
+	}
 
 	if (pressedJ){
-		bool inMaxVelocity = velocity > 250.f;
-		float dy = 0.f; //makes the delta y into 0 so that the player's delta y is not affected
-		background2_Y += (velocity) * deltaTime.asSeconds() * acceleration; // movement of the background
-		dy += velocity / 8 * deltaTime.asSeconds() * acceleration;
-		velocity++;
+		float dy = 0.f;
 		
-		if (inMaxVelocity) velocity = 250.f;
+		//speed limiter
+		speed++;
+		if (speed > 250.f) speed = 250.f;
+		background2_Y += (speed) * deltaTime.asSeconds() * acceleration;
+		dy += speed / 8 * deltaTime.asSeconds() * acceleration;
 		if (pressedA)
 			dx -= acceleration * deltaTime.asSeconds();
 		else if (pressedD)
 			dx += acceleration * deltaTime.asSeconds();
-		hurdle->hurdleShape.move(dx / 16.f, dy);
-		score += 25;
+		hurdle->hurdleShape.move(0, dy);
+		musicVol+= 0.5f;
+		if (musicVol > 100.f) musicVol = 100.f;
+		score += 20;
+	
 	}
 	else{
 		if (pressedK) {
 			dx = 0.f;
-			velocity -= 2.f;
+			speed -= 2.f;
 		}
-		velocity--;
-		if (velocity < 0) velocity = 0.f;
-		background2_Y += (velocity) * deltaTime.asSeconds() * acceleration;
+		speed--;
+		musicVol --;
+		if (speed < 0 || musicVol < 0) {
+			speed = 0.f;
+			musicVol = 0.f;
+		}
+		background2_Y += (speed)*deltaTime.asSeconds() * acceleration;
 		
 	}
 
@@ -121,15 +157,6 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 	if (background2_Y > 0)
 		background2_Y = -screenHeight;
 	
-	if (playerBounds.left + dx < 0)
-		dx = -playerBounds.left;
-	else if (playerBounds.left > screenWidth - playerSize.x)
-		dx = screenWidth - playerSize.x - playerBounds.left;
-
-	if (hurdlePos.y > screenHeight) {
-		Coordinate reset = this->hurdle->randomizer();
-		this->hurdle->hurdleShape.setPosition(reset.x, reset.y);
-	}
 
 	//collision detection
 	if (playerBounds.intersects(enemyBounds)) {
@@ -141,30 +168,40 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 		this->window->close();
 	}
 
-	//character movement
-	this->player->playerShape.move(dx, dy);
 
-	if (score == 900) {
-		this->music.play();
-		this->music.setRelativeToListener(true);
-		this->music.setVolume(5.f);
-	}
-
-	//kung nagddrive ba
-	if (velocity == 5.f) {
+	if (speed == 1.f) {
 		player->drivingSound();
 	}
-	else if (velocity == 0.f) {
-		player->drivingSoundStop();
+	else if (speed == 0.f) {
+		player->drivingSoundPause();
 	}
+	
+	if (playerBounds.left + dx < 0)
+		dx = -playerBounds.left;
+	else if (playerBounds.left > screenWidth - playerSize.x)
+		dx = screenWidth - playerSize.x - playerBounds.left;
+
+	if (hurdle->hurdleShape.getPosition().y > screenHeight) {
+		Coordinate reset = this->hurdle->randomizer();
+		this->hurdle->hurdleShape.setPosition(reset.x, reset.y);
+	}
+
+	//character movement
+	this->player->playerShape.move(dx, dy);
+	this->music.setVolume(musicVol);
 }
+
 
 //renderer
 void Game::renderAll() {
 	this->window->clear();
 	renderBG();
+	renderScoreCard();
+	renderSpeedometer();
 	this->window->draw(this->background);
     this->window->draw(hurdle->hurdleShape);
 	this->window->draw(player->playerShape);
+	this->window->draw(this->scoreCard);
+	this->window->draw(this->speedometer);
 	this->window->display();
 }

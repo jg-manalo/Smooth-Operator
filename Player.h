@@ -1,16 +1,14 @@
 #pragma once
-#include "Game.h"
 #include<SFML/Graphics.hpp>
 #include<SFML/Audio.hpp>
-class Player : protected Game
+class Player
 {
 public:
+	Player();
 	sf::Texture car;
 	sf::RectangleShape playerShape;
-public:
-	Player();
 	void drivingSound();
-	void drivingSoundStop();
+	void drivingSoundPause();
 private:
 	sf::SoundBuffer buffer;
 	sf::Sound driving;

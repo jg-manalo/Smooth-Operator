@@ -1,3 +1,4 @@
+#include "dimension.h"
 #include "Player.h"
 #include "Game.h"
 Player::Player()
@@ -12,12 +13,13 @@ void Player::drivingSound()
 {
 	buffer.loadFromFile("sounds/broom.mp3");
 	driving.setBuffer(buffer);
-	driving.play();
-	driving.setVolume(100.f);
 	driving.setLoop(true);
+	driving.setVolume(100);
+	driving.play();
+
 }
 
-void Player::drivingSoundStop()
+void Player::drivingSoundPause()
 {
-	driving.pause();
+  driving.pause();
 }
