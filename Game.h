@@ -17,6 +17,7 @@ private: //variables
 	const float acceleration;
 	float dx;
 	float dy;
+	float background2_Y = -SCREEN_HEIGHT;// comes from the predetermined value
 
 	//boolean var for user input
 	bool pressedA;	
@@ -33,9 +34,6 @@ private: //variables
 	sf::Sound crash;
 	sf::Music music;
 
-	Hurdle* hurdle; //object for hurdle
-	Player* player; //object for player
-	Hurdle* hurdle2; //another one
 	//score
 	unsigned long int score;
 private: 
@@ -51,5 +49,18 @@ public: //constructor/destructor
 	//to check whether the game is running
 	const bool isRunning() const;
 	void userInput(sf::Keyboard::Key key, bool isPressed); //checked if there any input from user
-	void run(); 
+	void run();
+
+public:
+	friend class Player;
+	friend class Hurdle;
+
+protected:
+	//predetermined values
+	const float SCREEN_HEIGHT = 600.f;
+	const float SCREEN_WIDTH = 800.f;
+	const float SCREEN_WIDTH_HALVED = 800.f / 2.f;
+	const float SCREEN_HEIGHT_HALVED = 600.f / 2.f;
+	const float XDIM = SCREEN_WIDTH_HALVED - 50.f;
+	const float YDIM = SCREEN_HEIGHT_HALVED - 50.f + 200.f;
 };

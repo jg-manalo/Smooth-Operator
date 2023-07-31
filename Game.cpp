@@ -14,16 +14,11 @@ Game::Game() : velocity{ 0.f }, acceleration{ 10.f }, dx{ 0.f }, dy{ 0.f }, scor
 	this->window = new sf::RenderWindow(this -> videoMode, "Smooth Operator",
 										sf::Style::Titlebar | sf::Style::Close);
 	this->window->setFramerateLimit(60);
-	this->player  = new Player();
-	this->hurdle  = new Hurdle();
 	this->music.openFromFile("sounds/cimh.mp3");
 }
 
-Game::~Game() {
-	delete this->player;
-	delete this->hurdle;
+Game::~Game() {	
 	delete this->window;
-	hurdle = nullptr;
 	window = nullptr;
 }
 
@@ -118,7 +113,7 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 		}
 		velocity--;
 		if (velocity < 0) velocity = 0.f;
-		background2_Y += (velocity)*deltaTime.asSeconds() * acceleration;
+		background2_Y += (velocity) * deltaTime.asSeconds() * acceleration;
 		
 	}
 
