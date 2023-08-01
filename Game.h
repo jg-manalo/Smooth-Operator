@@ -1,15 +1,17 @@
 #pragma once
+#include "dimension.h"
 #include "Hurdle.h"
 #include "Player.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <array>
 
+
 class Game
 {
 private:
 	//private var
-	sf::RenderWindow* window;
+	sf::RenderWindow* window = nullptr;
 	sf::VideoMode videoMode;
 	sf::Event event;
 
@@ -30,11 +32,9 @@ private:
 	sf::Texture road;
 	sf::Sprite background;
 	
-	//private func
-	void processEvents();
-	void update(sf::Time deltaTime, const float screenWidth, const float screenHeight);
-	void renderAll();
-	
+	//menu trigger
+	bool atMenu;
+
 	//audio
 	sf::SoundBuffer buffer;
 	sf::Sound crash;
@@ -45,26 +45,30 @@ private:
 	sf::Font font;
 	sf::Text scoreCard;
 	sf::Text speedometer;
-
+	sf::Text titleScreen;
 	//player and enemy
 	Hurdle* hurdle;
 	Player* player;
 
-	//score
+	//score and mechanics
+	float friction;
 	unsigned long int score;
 private:
-	//bg initialize
+	void processEvents();
+	void update(sf::Time deltaTime, const float screenWidth, const float screenHeight);
+	void renderMenu();
 	void renderBG();
 	void renderScoreCard();
 	void renderSpeedometer();
+	void renderAll();
+
 public:
 	//constructor/destructor
 	Game();
-	virtual ~Game();
+	~Game();
 
-	//to check whether the game is running
-	const bool running() const;
-	
+	//to check whether the game is isRunning
+	const bool isRunning() const;
 	void userInput(sf::Keyboard::Key key, bool isPressed); //checked if there any input from user
 	void run(); 
 };

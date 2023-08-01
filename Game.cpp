@@ -9,9 +9,11 @@
 #include<SFML/Audio.hpp>
 
 //constructor and destructor
-Game::Game() : speed{ 0.f }, acceleration{ 10.f }, dx{ 0.f }, dy{ 0.f }, score{ 0 }, musicVol{ 0.f } {
-	this->videoMode.height = 600;
-	this->videoMode.width = 800;
+Game::Game() : speed{ 0.f }, acceleration{ 10.f }, dx{ 0.f }, dy{ 0.f }, 
+				score{ 0 }, musicVol{ 0.f }, atMenu{ true }, friction {32.f}
+{
+	this->videoMode.height = SCREEN_HEIGHT;
+	this->videoMode.width = SCREEN_WIDTH;
 	this->window = new sf::RenderWindow(this -> videoMode, "Smooth Operator",
 										sf::Style::Titlebar | sf::Style::Close);
 	this->window->setFramerateLimit(60);
@@ -36,6 +38,16 @@ Game::~Game() {
 }
 
 
+void Game::renderMenu(){
+	titleScreen.setFont(font);
+	titleScreen.setString("Play Now");
+	titleScreen.setPosition(SCREEN_WIDTH_HALVED - 100, SCREEN_HEIGHT_HALVED - 100);
+	titleScreen.setCharacterSize(50);
+	this->window->clear();
+	this->window->draw(titleScreen);
+	this->window->display();
+}
+
 //background init
 void Game::renderBG() {
 	this->road.loadFromFile("graphics/px_roadstar.png");
@@ -44,17 +56,22 @@ void Game::renderBG() {
 }
 
 //runner drive
-const bool Game::running() const{
+const bool Game::isRunning() const{
 	return this->window->isOpen();
 }
 
 void Game::run() {
 	sf::Clock clock;
-	while (running()) {
+	while (isRunning()) {
 		sf::Time deltaTime = clock.restart();
 		processEvents();
-		update(deltaTime, SCREEN_WIDTH, SCREEN_HEIGHT);
-		renderAll();
+		if (atMenu) {
+			renderMenu();
+		}
+		else {
+			update(deltaTime, SCREEN_WIDTH, SCREEN_HEIGHT);
+			renderAll();
+		}
 	}
 }
 
@@ -66,17 +83,19 @@ void Game::processEvents(){
 				this->window->close();
 				break;
 			case sf::Event::KeyPressed:
-				if (this->event.key.code == sf::Keyboard::Escape) {
+				if (this->event.key.code == sf::Keyboard::Escape)
 					this->window->close();
-				}
-					userInput(event.key.code, true);
-					break;
+				else if (this->event.key.code == sf::Keyboard::Enter)
+					atMenu = false;
+				userInput(event.key.code, true);
+				break;
 			case sf::Event::KeyReleased:
 				if (this->event.key.code == sf::Keyboard::Escape)
 					this->window->close();
 				userInput(event.key.code, false);
 				break;
 			}
+
 	}
 }
 
@@ -108,6 +127,7 @@ void Game::renderSpeedometer() {
 	this->speedometer.setString(speedDisplay.str());
 }
 
+
 //game logic
 void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight){
 	sf::Vector2f playerPos = player->playerShape.getPosition();
@@ -116,22 +136,29 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 	const sf::Vector2f playerSize = player->playerShape.getSize();
 
 	if (score == 1000) {
-		this->music.play();
+		//this->music.play();
 		this->music.setVolume(0);
+	}
+	else if (score == 5000) {
+		friction /= 2.f;
+	}
+	else if (score == 8000) {
+		friction /= 2.f;
+	}
+	else if (score == 15000) {
+		friction /= 2.f;
+	}
+	else if (score == 200000) {
+		speed *= 10.f;
 	}
 
 	if (pressedJ){
 		float dy = 0.f;
-		
 		//speed limiter
 		speed++;
-		if (speed > 250.f) speed = 250.f;
+		if (speed > 350.f) speed = 350.f;
 		background2_Y += (speed) * deltaTime.asSeconds() * acceleration;
-		dy += speed / 8 * deltaTime.asSeconds() * acceleration;
-		if (pressedA)
-			dx -= acceleration * deltaTime.asSeconds();
-		else if (pressedD)
-			dx += acceleration * deltaTime.asSeconds();
+		dy += speed / friction * deltaTime.asSeconds() * acceleration;
 		hurdle->hurdleShape.move(0, dy);
 		musicVol+= 0.5f;
 		if (musicVol > 100.f) musicVol = 100.f;
@@ -164,10 +191,17 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 		this->buffer.loadFromFile("sounds/undertaker.mp3");
 		this->crash.setBuffer(buffer);
 		this->crash.play();
-		Sleep(2000);
+		Sleep(1000);
 		this->window->close();
 	}
 
+
+	if (speed > 0) {
+		if (pressedA)
+			dx -= acceleration * deltaTime.asSeconds();
+		else if (pressedD)
+			dx += acceleration * deltaTime.asSeconds();
+	}
 
 	if (speed == 1.f) {
 		player->drivingSound();
