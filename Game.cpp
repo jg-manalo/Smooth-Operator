@@ -10,7 +10,8 @@
 
 //constructor and destructor
 Game::Game() : speed{ 0.f }, acceleration{ 10.f }, dx{ 0.f }, dy{ 0.f }, 
-				score{ 0 }, musicVol{ 0.f }, atMenu{ true }, friction {32.f}
+			   score{ 0 }, musicVol{ 0.f }, atMenu{ true }, friction {32.f},
+			   playing { true } 
 {
 	this->videoMode.height = SCREEN_HEIGHT;
 	this->videoMode.width = SCREEN_WIDTH;
@@ -53,6 +54,7 @@ void Game::renderBG() {
 	this->road.loadFromFile("graphics/px_roadstar.png");
 	this->background.setTexture(road);
 	background.setPosition(0.f, background2_Y);
+	this->window->draw(this->background);
 }
 
 //runner drive
@@ -68,9 +70,12 @@ void Game::run() {
 		if (atMenu) {
 			renderMenu();
 		}
-		else {
+		else if (playing){
 			update(deltaTime, SCREEN_WIDTH, SCREEN_HEIGHT);
-			renderAll();
+			renderGameplay();
+		}
+		else{
+			renderGameOver();
 		}
 	}
 }
@@ -115,16 +120,18 @@ void Game::userInput(sf::Keyboard::Key key, bool isPressed) {
 
 //displaying score
 void Game::renderScoreCard(){
-	std::stringstream scoreDisplay;
+	std::ostringstream scoreDisplay;
 	scoreDisplay << "Score: " << score;
 	this->scoreCard.setString(scoreDisplay.str());
+	this->window->draw(this->scoreCard);
 }
 
 //displaying speed
 void Game::renderSpeedometer() {
-	std::stringstream speedDisplay;
+	std::ostringstream speedDisplay;
 	speedDisplay << "Speed: " << speed << " kph";
 	this->speedometer.setString(speedDisplay.str());
+	this->window->draw(this->speedometer);
 }
 
 
@@ -136,41 +143,36 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 	const sf::Vector2f playerSize = player->playerShape.getSize();
 
 	if (score == 1000) {
-		//this->music.play();
+		this->music.play();
 		this->music.setVolume(0);
 	}
 	else if (score == 5000) {
 		friction /= 2.f;
 	}
-	else if (score == 8000) {
+	else if (score == 23000) {
 		friction /= 2.f;
 	}
-	else if (score == 15000) {
+	else if (score == 50000) {
 		friction /= 2.f;
 	}
-	else if (score == 200000) {
-		speed *= 10.f;
-	}
+
 
 	if (pressedJ){
 		float dy = 0.f;
 		//speed limiter
-		speed++;
-		if (speed > 350.f) speed = 350.f;
+		accelerate(speed);
+		musicVolControl(musicVol);
 		background2_Y += (speed) * deltaTime.asSeconds() * acceleration;
 		dy += speed / friction * deltaTime.asSeconds() * acceleration;
 		hurdle->hurdleShape.move(0, dy);
-		musicVol+= 0.5f;
-		if (musicVol > 100.f) musicVol = 100.f;
 		score += 20;
-	
 	}
 	else{
 		if (pressedK) {
 			dx = 0.f;
 			speed -= 2.f;
 		}
-		speed--;
+		speed-= 0.5f;
 		musicVol --;
 		if (speed < 0 || musicVol < 0) {
 			speed = 0.f;
@@ -179,29 +181,21 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 		background2_Y += (speed)*deltaTime.asSeconds() * acceleration;
 		
 	}
-
-	//background scrolling animation
-	if (background2_Y > 0)
-		background2_Y = -screenHeight;
 	
+	steerAction(speed, dx, acceleration, deltaTime);
+
+	//background scrolling limiter
+	background2_Y = (background2_Y > 0) ? background2_Y = -screenHeight : background2_Y;
+	
+
 
 	//collision detection
 	if (playerBounds.intersects(enemyBounds)) {
 		this->music.stop();
-		this->buffer.loadFromFile("sounds/undertaker.mp3");
-		this->crash.setBuffer(buffer);
-		this->crash.play();
-		Sleep(1000);
-		this->window->close();
+		crashedSound();
+		playing = false;
 	}
 
-
-	if (speed > 0) {
-		if (pressedA)
-			dx -= acceleration * deltaTime.asSeconds();
-		else if (pressedD)
-			dx += acceleration * deltaTime.asSeconds();
-	}
 
 	if (speed == 1.f) {
 		player->drivingSound();
@@ -227,15 +221,64 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 
 
 //renderer
-void Game::renderAll() {
+void Game::renderGameplay() {
 	this->window->clear();
 	renderBG();
 	renderScoreCard();
 	renderSpeedometer();
-	this->window->draw(this->background);
+	
     this->window->draw(hurdle->hurdleShape);
 	this->window->draw(player->playerShape);
-	this->window->draw(this->scoreCard);
-	this->window->draw(this->speedometer);
+
 	this->window->display();
+}
+
+void Game::renderGameOver()
+{
+	std::ostringstream displayYouLose;
+	displayYouLose << "You Lose!\nScore: " << score;
+	this->gameOver.setFont(font);
+	this->gameOver.setString(displayYouLose.str());
+	this->gameOver.setPosition(SCREEN_WIDTH_HALVED - 50.f, SCREEN_HEIGHT_HALVED - 50.f);
+	this->window->clear();
+	this->window->draw(gameOver);
+	this->window->display();
+	Sleep(5000);
+	atMenu = true;
+	dx = 0.f;
+	score = 0.f;
+	speed = 0.f;
+	Coordinate reset = this->hurdle->randomizer();
+	this->hurdle->hurdleShape.setPosition(reset.x, reset.y);
+	playing = true;
+}
+
+float Game::steerAction(float& speed, float& dx, const float& acceleration, sf::Time& deltaTime)
+{
+	if (speed > 0) {
+		if (pressedA)
+			dx -= acceleration * deltaTime.asSeconds();
+		else if (pressedD)
+			dx += acceleration * deltaTime.asSeconds();
+	}
+	return dx;
+}
+
+float Game::accelerate(float& speed)
+{
+	speed+= 0.5f;
+	return speed = (speed > 350.f) ? speed = 350.f : speed;
+}
+
+float Game::musicVolControl(float& musicVol)
+{
+	musicVol += 0.5f;
+	return musicVol = (musicVol > 100.f) ? musicVol = 100.f : musicVol; ;
+}
+
+void Game::crashedSound()
+{
+	this->buffer.loadFromFile("sounds/undertaker.mp3");
+	this->crash.setBuffer(buffer);
+	this->crash.play();
 }
