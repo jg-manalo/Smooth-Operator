@@ -1,6 +1,10 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 #include "dimension.h"
 #include "Player.h"
 #include "Game.h"
+
 
 Player::Player(){
 	this->playerShape.setSize(sf::Vector2f(100.f, 150.f));

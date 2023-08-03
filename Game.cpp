@@ -1,3 +1,6 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 #include "dimension.h"
 #include "Game.h"
 #include "Player.h"
@@ -8,10 +11,14 @@
 #include<SFML/Graphics.hpp>
 #include<SFML/Audio.hpp>
 
+
+
+
 //constructor and destructor
 Game::Game() : speed{ 0.f }, acceleration{ 10.f }, dx{ 0.f }, dy{ 0.f }, 
 			   score{ 0 }, musicVol{ 0.f }, atMenu{ true }, friction {32.f},
-			   isGameOver { false } 
+			   isGameOver { false }, pressedA{false}, pressedD{false}, 
+			   pressedJ{ false }, pressedK {false}
 {
 	this->videoMode.height = SCREEN_HEIGHT;
 	this->videoMode.width = SCREEN_WIDTH;

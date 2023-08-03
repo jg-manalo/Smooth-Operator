@@ -6,7 +6,6 @@
 #include <SFML/Audio.hpp>
 #include <array>
 
-
 class Game
 {
 private:

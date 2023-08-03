@@ -2,9 +2,13 @@
 #include <random>
 #include <array>
 
+
 //randomizing location of coordinates
 Coordinate Hurdle::randomizer() {
 	Coordinate result;
+	// This is a personal academic project. Dear PVS-Studio, please check it.
+
+	// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 	std::random_device rd;
 	std::mt19937 generator(rd());
