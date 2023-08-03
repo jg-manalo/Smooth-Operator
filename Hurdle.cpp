@@ -24,5 +24,5 @@ Hurdle::Hurdle() {
 	this->hurdleShape.setFillColor(sf::Color::Cyan);
 	this->hurdleShape.setSize(sf::Vector2f(100.f, 150.f));
 	this->hurdleShape.setTexture(&hurdle);
-	this->hurdleShape.setPosition(random.x, random.y);
+	this->hurdleShape.setPosition(random.x, -200.f);
 }

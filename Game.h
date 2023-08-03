@@ -34,7 +34,7 @@ private:
 	
 	//menu trigger
 	bool atMenu;
-	bool playing;
+	bool isGameOver;
 	//audio
 	sf::SoundBuffer buffer;
 	sf::Sound crash;
@@ -51,10 +51,13 @@ private:
 	Hurdle* hurdle;
 	Player* player;
 
+	//icon
+	sf::Image icon;
+
 	//score and mechanics
 	float friction;
 	unsigned long int score;
-private:
+private: // game settings
 	void processEvents();
 	void update(sf::Time deltaTime, const float screenWidth, const float screenHeight);
 	void renderMenu();
@@ -63,6 +66,7 @@ private:
 	void renderSpeedometer();
 	void renderGameplay();
 	void renderGameOver();
+	void resetState(bool& atMenu, bool& isGameOver);
 private: //car behaviors
 	float steerAction(float& speed, float& dx,const float& acceleration, sf::Time& deltaTime);
 	float accelerate(float& speed);

@@ -1,8 +1,8 @@
 #include <SFML/Graphics.hpp>
+#include <Windows.h>
 #include "Game.h"
 
-int main()
-{
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	Game game;
 
 	while (game.isRunning()) {

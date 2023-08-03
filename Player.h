@@ -9,7 +9,10 @@ public:
 	sf::RectangleShape playerShape;
 	void drivingSound();
 	void drivingSoundPause();
+	void brakingSound();
 private:
-	sf::SoundBuffer buffer;
+	sf::SoundBuffer driveSoundBuffer;
+	sf::SoundBuffer brakeSoundBuffer;
 	sf::Sound driving;
+	sf::Sound braking;
 };
