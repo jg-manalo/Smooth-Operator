@@ -10,7 +10,7 @@ Player::Player(){
 	this->playerShape.setSize(sf::Vector2f(100.f, 150.f));
 	car.loadFromFile("graphics/car.png");
 	this->playerShape.setTexture(&car);
-	this->playerShape.setPosition(XDIM, YDIM);
+	this->playerShape.setPosition(STARTING_PLAYER_XPOSITION, STARTING_PLAYER_YPOSITION);
 }
 
 void Player::drivingSound(){

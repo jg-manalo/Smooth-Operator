@@ -17,9 +17,9 @@ private:
 	//physics
 	float speed;
 	const float acceleration;
-	float dx;
-	float dy;
-	float background2_Y = -SCREEN_HEIGHT;// comes from the predetermined value
+	float deltaX;
+	float deltaY;
+	float backgroundLocation = -SCREEN_HEIGHT;// comes from the predetermined value
 
 	//boolean var for user input
 	bool pressedA;	
@@ -38,7 +38,7 @@ private:
 	sf::SoundBuffer buffer;
 	sf::Sound crash;
 	sf::Music music;
-	float musicVol;
+	float musicVolume;
 
 	//fonts
 	sf::Font font;
@@ -60,16 +60,16 @@ private: // game settings
 	void processEvents();
 	void update(sf::Time deltaTime, const float screenWidth, const float screenHeight);
 	void renderMenu();
-	void renderBG();
+	void renderBackground();
 	void renderScoreCard();
 	void renderSpeedometer();
 	void renderGameplay();
 	void renderGameOver();
 	void resetState(bool& atMenu, bool& isGameOver);
 private: //car behaviors
-	float steerAction(float& speed, float& dx,const float& acceleration, sf::Time& deltaTime);
+	float steerAction(float& speed, float& deltaX,const float& acceleration, sf::Time& deltaTime);
 	float accelerate(float& speed);
-	float musicVolControl(float& musicVol);
+	float musicVolumeControl(float& musicVolume);
 	void crashedSound();
 public:
 	//constructor/destructor

@@ -15,8 +15,8 @@
 
 
 //constructor and destructor
-Game::Game() : speed{ 0.f }, acceleration{ 10.f }, dx{ 0.f }, dy{ 0.f }, 
-			   score{ 0 }, musicVol{ 0.f }, atMenu{ true }, friction {32.f},
+Game::Game() : speed{ 0.f }, acceleration{ 10.f }, deltaX{ 0.f }, deltaY{ 0.f }, 
+			   score{ 0 }, musicVolume{ 0.f }, atMenu{ true }, friction {32.f},
 			   isGameOver { false }, pressedA{false}, pressedD{false}, 
 			   pressedJ{ false }, pressedK {false}
 {
@@ -61,10 +61,10 @@ void Game::renderMenu(){
 }
 
 //background init
-void Game::renderBG() {
+void Game::renderBackground() {
 	this->road.loadFromFile("graphics/px_roadstar.png");
 	this->background.setTexture(road);
-	background.setPosition(0.f, background2_Y);
+	background.setPosition(0.f, backgroundLocation);
 	this->window->draw(this->background);
 }
 
@@ -171,36 +171,36 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 
 
 	if (pressedJ){
-		float dy = 0.f;
+		float deltaY = 0.f;
 		accelerate(speed);
-		musicVolControl(musicVol);
-		background2_Y += (speed) * deltaTime.asSeconds() * acceleration;
-		dy += speed / friction * deltaTime.asSeconds() * acceleration;
-		hurdle->hurdleShape.move(0, dy);
+		musicVolumeControl(musicVolume);
+		backgroundLocation += speed * deltaTime.asSeconds() * acceleration;
+		deltaY += speed / friction * deltaTime.asSeconds() * acceleration;
+		hurdle->hurdleShape.move(0, deltaY);
 		score += 20;
 	}
 	else{
 		if (pressedK) {
 			player->brakingSound();
-			dx = 0.f;
+			deltaX = 0.f;
 			speed -= 2.f;
 		}
 
 		speed -= 0.5f;
-		musicVol--;
+		musicVolume--;
 
-		if (speed < 0 || musicVol < 0) {
+		if (speed < 0 || musicVolume < 0) {
 			speed = 0.f;
-			musicVol = 0.f;
+			musicVolume = 0.f;
 		}
 
-		background2_Y += speed * deltaTime.asSeconds() * acceleration;	
+		backgroundLocation += speed * deltaTime.asSeconds() * acceleration;	
 	}
 	
-	steerAction(speed, dx, acceleration, deltaTime);
+	steerAction(speed, deltaX, acceleration, deltaTime);
 
 	//background scrolling limiter
-	background2_Y = (background2_Y > 0) ? background2_Y = -screenHeight : background2_Y;
+	backgroundLocation = (backgroundLocation > 0) ? backgroundLocation = -screenHeight : backgroundLocation;
 	
 	//collision detection
 	if (playerBounds.intersects(enemyBounds)) {
@@ -219,10 +219,10 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 		player->drivingSoundPause();
 	}
 	
-	if (playerBounds.left + dx < 0)
-		dx = -playerBounds.left;
+	if (playerBounds.left + deltaX < 0)
+		deltaX = -playerBounds.left;
 	else if (playerBounds.left > screenWidth - playerSize.x)
-		dx = screenWidth - playerSize.x - playerBounds.left;
+		deltaX = screenWidth - playerSize.x - playerBounds.left;
 
 	if (hurdle->hurdleShape.getPosition().y > screenHeight) {
 		Coordinate reset = this->hurdle->randomizer();
@@ -230,15 +230,15 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 	}
 
 	//character movement
-	this->player->playerShape.move(dx, dy);
-	this->music.setVolume(musicVol);
+	this->player->playerShape.move(deltaX, deltaY);
+	this->music.setVolume(musicVolume);
 }
 
 
 //renderer
 void Game::renderGameplay(){
 	this->window->clear();
-	renderBG();
+	renderBackground();
     this->window->draw(hurdle->hurdleShape);
 	this->window->draw(player->playerShape);
 	renderScoreCard();
@@ -260,25 +260,25 @@ void Game::renderGameOver(){
 
 void Game::resetState(bool& atMenu, bool& isGameOver){
 	atMenu = true;
-	dx = 0.f;
-	score = 0.f;
+	deltaX = 0.f;
+	score = 0;
 	speed = 0.f;
 	player->drivingSoundPause();
 	Coordinate reset = this->hurdle->randomizer();
 	this->hurdle->hurdleShape.setPosition(reset.x, -200.f);
-	this->player->playerShape.setPosition(XDIM, YDIM);
+	this->player->playerShape.setPosition(STARTING_PLAYER_XPOSITION, STARTING_PLAYER_YPOSITION);
 	friction = 32.f;
 	isGameOver  = false;
 }
 
-float Game::steerAction(float& speed, float& dx, const float& acceleration, sf::Time& deltaTime){
+float Game::steerAction(float& speed, float& deltaX, const float& acceleration, sf::Time& deltaTime){
 	if (speed > 0) {
 		if (pressedA)
-			dx -= acceleration * deltaTime.asSeconds();
+			deltaX -= acceleration * deltaTime.asSeconds();
 		else if (pressedD)
-			dx += acceleration * deltaTime.asSeconds();
+			deltaX += acceleration * deltaTime.asSeconds();
 	}
-	return dx;
+	return deltaX;
 }
 
 float Game::accelerate(float& speed){
@@ -286,9 +286,9 @@ float Game::accelerate(float& speed){
 	return speed = (speed > 350.f) ? speed = 350.f : speed;
 }
 
-float Game::musicVolControl(float& musicVol){
-	musicVol += 0.5f;
-	return musicVol = (musicVol > 100.f) ? musicVol = 100.f : musicVol; ;
+float Game::musicVolumeControl(float& musicVolume){
+	musicVolume += 0.5f;
+	return musicVolume = (musicVolume > 100.f) ? musicVolume = 100.f : musicVolume; ;
 }
 
 void Game::crashedSound(){
