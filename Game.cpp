@@ -5,7 +5,6 @@
 #include "Game.h"
 #include "Player.h"
 #include "Hurdle.h"
-#include<iostream>
 #include <sstream>
 #include <Windows.h>
 #include<SFML/Graphics.hpp>
@@ -28,16 +27,19 @@ Game::Game() : speed{ 0.f }, acceleration{ 10.f }, deltaX{ 0.f }, deltaY{ 0.f },
 	
 	this->icon.loadFromFile("graphics/leo.png");
 	this->window->setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
+
 	this->window->setFramerateLimit(60);
-	this->player = new Player();
-	this->hurdle = new Hurdle();
-	this->music.openFromFile("sounds/cimh.mp3");
-	this->font.loadFromFile("fonts/racing.ttf");
-	this->scoreCard.setFont(font);
-	this->speedometer.setFont(font);
-	this->speedometer.setPosition(550.f, 0.f);
-	this->scoreCard.setPosition(50.f, 0.f);
-	
+
+	initializeBackground();
+	initializeMusic();
+	initializeFont();
+	initializeScorecard();
+	initializeSpeedometer();
+	initializeCrashedSound();
+	initializeGameOverScreen();
+
+	this->player = new Player(); //creates a player object
+	this->hurdle = new Hurdle(); //creates a hurdle object 
 }
 
 Game::~Game() {
@@ -62,8 +64,6 @@ void Game::renderMenu(){
 
 //background init
 void Game::renderBackground() {
-	this->road.loadFromFile("graphics/px_roadstar.png");
-	this->background.setTexture(road);
 	background.setPosition(0.f, backgroundLocation);
 	this->window->draw(this->background);
 }
@@ -147,9 +147,9 @@ void Game::renderSpeedometer() {
 
 //game logic
 void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight){
-	sf::Vector2f playerPos = player->playerShape.getPosition();
-	sf::FloatRect playerBounds = player->playerShape.getGlobalBounds();
-	sf::FloatRect enemyBounds = hurdle->hurdleShape.getGlobalBounds();
+	sf::Vector2f playerPos        = player->playerShape.getPosition();
+	sf::FloatRect playerBounds    = player->playerShape.getGlobalBounds();
+	sf::FloatRect enemyBounds     = hurdle->hurdleShape.getGlobalBounds();
 	const sf::Vector2f playerSize = player->playerShape.getSize();
 
 
@@ -249,25 +249,24 @@ void Game::renderGameplay(){
 void Game::renderGameOver(){
 	std::ostringstream displayYouLose;
 	displayYouLose << "You Lose!\nScore: " << score;
-	this->gameOver.setFont(font);
 	this->gameOver.setString(displayYouLose.str());
-	this->gameOver.setPosition(SCREEN_WIDTH_HALVED - 50.f, SCREEN_HEIGHT_HALVED - 50.f);
 	this->window->clear();
 	this->window->draw(gameOver);
 	this->window->display();
 	Sleep(5000);
 }
 
+//Game states
 void Game::resetState(bool& atMenu, bool& isGameOver){
 	atMenu = true;
 	deltaX = 0.f;
-	score = 0;
-	speed = 0.f;
+	score  = 0;
+	speed  = 0.f;
 	player->drivingSoundPause();
 	Coordinate reset = this->hurdle->randomizer();
 	this->hurdle->hurdleShape.setPosition(reset.x, -200.f);
 	this->player->playerShape.setPosition(STARTING_PLAYER_XPOSITION, STARTING_PLAYER_YPOSITION);
-	friction = 32.f;
+	friction    = 32.f;
 	isGameOver  = false;
 }
 
@@ -281,6 +280,7 @@ float Game::steerAction(float& speed, float& deltaX, const float& acceleration, 
 	return deltaX;
 }
 
+//once nag polymorphism na tayo, ibigay na natin 'to kay Player Class
 float Game::accelerate(float& speed){
 	speed += 0.5f;
 	return speed = (speed > 350.f) ? speed = 350.f : speed;
@@ -292,7 +292,39 @@ float Game::musicVolumeControl(float& musicVolume){
 }
 
 void Game::crashedSound(){
+	this->crash.play();
+}
+
+// assets initializer (on the other day mo na lang ibahin into bool, once settled ka na sa )
+void Game::initializeMusic(){
+	this->music.openFromFile("sounds/cimh.mp3");
+}
+
+void Game::initializeBackground(){
+	this->road.loadFromFile("graphics/px_roadstar.png");
+	this->background.setTexture(road);
+}
+
+void Game::initializeFont(){
+	this->font.loadFromFile("fonts/racing.ttf");
+};
+
+void Game::initializeScorecard(){
+	this->scoreCard.setFont(font);
+	this->scoreCard.setPosition(50.f, 0.f);
+}
+
+void Game::initializeSpeedometer(){
+	this->speedometer.setFont(font);
+	this->speedometer.setPosition(550.f, 0.f);
+}
+
+void Game::initializeCrashedSound(){
 	this->buffer.loadFromFile("sounds/undertaker.mp3");
 	this->crash.setBuffer(buffer);
-	this->crash.play();
+};
+
+void initializeGameOverScreen(){
+	this->gameOver.setFont(font);
+	this->gameOver.setPosition(SCREEN_WIDTH_HALVED - 50.f, SCREEN_HEIGHT_HALVED - 50.f);
 }

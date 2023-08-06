@@ -20,4 +20,8 @@ private:
 	sf::SoundBuffer brakeSoundBuffer;
 	sf::Sound driving;
 	sf::Sound braking;
+private: //player's assets initializer
+	void initializePlayerLooks();
+	void initializeBrakingSound();
+	void initializeDrivingSound();
 };

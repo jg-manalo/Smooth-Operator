@@ -7,19 +7,14 @@
 
 
 Player::Player(){
-	this->playerShape.setSize(sf::Vector2f(100.f, 150.f));
-	car.loadFromFile("graphics/car.png");
-	this->playerShape.setTexture(&car);
-	this->playerShape.setPosition(STARTING_PLAYER_XPOSITION, STARTING_PLAYER_YPOSITION);
+	initializePlayerLooks();
+
 }
 
 void Player::drivingSound(){
-	driveSoundBuffer.loadFromFile("sounds/broom.mp3");
-	driving.setBuffer(driveSoundBuffer);
 	driving.setLoop(true);
-	driving.setVolume(100);
+	driving.setVolume(100.f);
 	driving.play();
-
 }
 
 void Player::drivingSoundPause(){
@@ -27,8 +22,23 @@ void Player::drivingSoundPause(){
 }
 
 void Player::brakingSound(){
-	brakeSoundBuffer.loadFromFile("sounds/brake.mp3");
-	braking.setBuffer(brakeSoundBuffer);
 	braking.setVolume(80.f);
 	braking.play();
+}
+
+void Player::initializePlayerLooks(){
+	this->playerShape.setSize(sf::Vector2f(100.f, 150.f));
+	this->car.loadFromFile("graphics/car.png");
+	this->playerShape.setTexture(&car);
+	this->playerShape.setPosition(STARTING_PLAYER_XPOSITION, STARTING_PLAYER_YPOSITION);
+}
+
+void Player::initializeDrivingSound(){
+	driveSoundBuffer.loadFromFile("sounds/broom.mp3");
+	driving.setBuffer(driveSoundBuffer);
+};
+
+void initializeBrakingSound(){
+	rakeSoundBuffer.loadFromFile("sounds/brake.mp3");
+	braking.setBuffer(brakeSoundBuffer);
 }

@@ -56,6 +56,16 @@ private:
 	//score and mechanics
 	float friction;
 	unsigned long int score;
+
+private: //assets initializer
+	void initializeMusic();
+	void initializeBackground();
+	void initializeFont();
+	void initializeScorecard();
+	void initializeSpeedometer();
+	void initializeCrashedSound();
+	void initializeGameOverScreen();
+
 private: // game settings
 	void processEvents();
 	void update(sf::Time deltaTime, const float screenWidth, const float screenHeight);
@@ -66,6 +76,7 @@ private: // game settings
 	void renderGameplay();
 	void renderGameOver();
 	void resetState(bool& atMenu, bool& isGameOver);
+	
 private: //car behaviors
 	float steerAction(float& speed, float& deltaX,const float& acceleration, sf::Time& deltaTime);
 	float accelerate(float& speed);
