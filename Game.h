@@ -1,8 +1,9 @@
 #ifndef GAME_H
 #define GAME_H
+
 #include "dimension.h"
-#include "Hurdle.h"
 #include "Car.h"
+#include "Hurdle.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <cstdint>
@@ -12,18 +13,20 @@ class Game
 {
 private:
 	//window and event
-	sf::RenderWindow* window = nullptr;
+	sf::RenderWindow window;
 	sf::VideoMode videoMode;
 	sf::Event event;
 
+	//boolean var for user input
+	bool pressedA;
+	bool pressedD;
+	bool pressedJ;
+	bool pressedK;
+
 	//physics
-	float speed;
-	const float acceleration;
-	float deltaX;
-	float deltaY;
 	float backgroundLocation = -SCREEN_HEIGHT;// comes from the predetermined value
 	
-	//Road bg
+	//Road backrgound
 	sf::Texture road;
 	sf::Sprite background;
 	
@@ -31,30 +34,28 @@ private:
 	bool atMenu;
 	bool isGameOver;
 
-	//audio
-	sf::SoundBuffer buffer;
-	sf::Sound crash;
+	//game audio
 	sf::Music music;
 	float musicVolume;
 
-	//fonts
-	sf::Font font;
+	//fonts & texts
 	sf::Text scoreCard;
 	sf::Text speedometer;
 	sf::Text titleScreen;
 	sf::Text gameOver;
+	sf::Font font;
+
 
 	//player and enemy
-	Car* hurdle;
-	Car* player;
+	Car* hurdle = nullptr;
+	Car* player = nullptr;
 
 	//icon
 	sf::Image icon;
 
 	//score and mechanics
 	float friction;
-	unsigned long int score;
-private:
+	uint32_t score;
 
 private: // game settings
 	void processEvents();
@@ -67,7 +68,6 @@ private: // game settings
 	void renderGameOver();
 	void resetState(bool& atMenu, bool& isGameOver);
 public:
-	//constructor/destructor
 	Game();
 	~Game();
 
@@ -75,13 +75,5 @@ public:
 	const bool isRunning() const;
 	void userInput(sf::Keyboard::Key key, bool isPressed); //checked if there any input from user
 	void run(); 
-
-protected:
-	//boolean var for user input
-	bool pressedA;
-	bool pressedD;
-	bool pressedJ;
-	bool pressedK;
-
 };
 #endif

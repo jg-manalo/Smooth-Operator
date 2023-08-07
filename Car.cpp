@@ -1,35 +1,64 @@
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-#include "dimension.h"
 #include "Car.h"
-#include "Game.h"
+#include "dimension.h"
 #include <random>
 #include <cstdlib>
 #include <cstdint>
+#include <iostream>
+#include <iomanip>
+#include <array>
 
-Car::Car(){
-	this->carShape.setSize(sf::Vector2f(100.f, 150.f));
+Car::Car() : speed{ 50.f }, deltaX{ 0.f }, deltaY{ 0.f }, friction{ 32.f }, acceleration{ 10.f } {
+	
+	try {
+		if (!carSkin.loadFromFile("graphics/car.png"))
+			throw std::runtime_error("Could not load car.png");
+
+		if (!crashedSoundBuffer.loadFromFile("sounds/undertaker.mp3"))
+			throw std::runtime_error("Could not load undertaker.mp3");
+
+		if (!driveSoundBuffer.loadFromFile("sounds/broom.mp3"))
+			throw std::runtime_error("Could not load broom.mp3");
+
+		if (!brakeSoundBuffer.loadFromFile("sounds/brake.mp3"))
+			throw std::runtime_error("Could not load brake.mp3");
+	}
+	catch (const std::exception& error) {
+	
+		std::cout << "Error: " << error.what();
+	}
+
 	this->carShape.setPosition(STARTING_PLAYER_XPOSITION, STARTING_PLAYER_YPOSITION);
-}
+	this->carShape.setSize(sf::Vector2f(100.f, 150.f));
+	this->carShape.setTexture(&carSkin);
 
-void Car::drivingSound(){
-	driveSoundBuffer.loadFromFile("sounds/broom.mp3");
-	driving.setBuffer(driveSoundBuffer);
-	driving.setLoop(true);
-	driving.setVolume(100);
-	driving.play();
+	this->drivingSound.setBuffer(driveSoundBuffer);
+	this->brakingSound.setBuffer(brakeSoundBuffer);
+	this->crashedSound.setBuffer(crashedSoundBuffer);
 
 }
 
-void Car::drivingSoundPause(){
-  driving.pause();
+
+void Car::drivingSoundFX(){
+	this->drivingSound.setLoop(true);
+	this->drivingSound.setVolume(100);
+	this->drivingSound.play();
+
 }
 
-void Car::brakingSound(){
-	brakeSoundBuffer.loadFromFile("sounds/brake.mp3");
-	braking.setBuffer(brakeSoundBuffer);
-	braking.setVolume(80.f);
-	braking.play();
+void Car::drivingSoundPauseFX(){
+  drivingSound.pause();
+}
+
+void Car::brakingSoundFX(){
+	this->brakingSound.setBuffer(brakeSoundBuffer);
+	this->brakingSound.setVolume(80.f);
+	this->brakingSound.play();
+}
+
+void Car::crashedSoundFX(){
+	this->crashedSound.play();
 }
 
 Coordinate Car::randomizer() {
@@ -40,20 +69,20 @@ Coordinate Car::randomizer() {
 	std::mt19937 generator(rd());
 	std::uniform_real_distribution<float> distribution(0.f, 650.f);
 
-	std::array<float, 3> yCoord = { 0.f , -100.f, -200.f };
+	std::array<float, 3> yCoordinate = { 0.f , -100.f, -200.f };
 	uint32_t selectY = std::rand() % 3;
 
 	result.x = distribution(generator);;
-	result.y = yCoord[selectY];
+	result.y = yCoordinate[selectY];
 	return result;
 }
 
-float Car::steerAction(float& speed, float& deltaX, const float& acceleration, sf::Time& deltaTime) {
+float Car::steerAction(const float& speed, float& deltaX, const float& acceleration, sf::Time& deltaTime, const float& pressedA, const float& pressedD) {
 	if (speed > 0) {
 		if (pressedA)
-			deltaX -= acceleration * deltaTime.asSeconds();
+			deltaX -=  1 * deltaTime.asSeconds();
 		else if (pressedD)
-			deltaX += acceleration * deltaTime.asSeconds();
+			deltaX +=  1 * deltaTime.asSeconds();
 	}
 	return deltaX;
 }
@@ -63,12 +92,7 @@ float Car::accelerate(float& speed){
 	return speed = (speed > 150.f) ? speed = 150.f : speed;
 }
 
-bool Car::initializeCrashedSound(){
-	return true;
-}
-
-bool Car::initializeCarSkin(){
-	carSkin.loadFromFile("graphics/car.png");
-	this->carShape.setTexture(&carSkin);
-	return true;
+float Car::musicVolumeControl(float& musicVolume){
+	musicVolume += 0.5f;
+	return musicVolume = (musicVolume > 100.f) ? musicVolume = 100.f : musicVolume;
 }
