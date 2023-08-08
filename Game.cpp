@@ -6,7 +6,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
-
+#include <stdexcept>
 
 using std::this_thread::sleep_for;
 using std::chrono::seconds;

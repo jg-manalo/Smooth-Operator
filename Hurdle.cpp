@@ -4,7 +4,7 @@
 #include <random>
 #include <array>
 #include <iostream>
-
+#include <stdexcept>
 Hurdle::Hurdle() {
 	try {
 		if (!carSkin.loadFromFile("graphics/car.png"))
