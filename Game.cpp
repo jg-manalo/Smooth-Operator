@@ -12,9 +12,10 @@ using std::this_thread::sleep_for;
 using std::chrono::seconds;
 
 //constructor and destructor
-Game::Game() : score{ 0 }, musicVolume{0.f} , atMenu{ true }, 
-			   isGameOver { false }, pressedA{false}, pressedD{false}, 
-	           pressedJ{ false }, pressedK{ false }, friction {32.f}, event{}
+Game::Game() : score { 0 }, musicVolume { 0.f } , atMenu { true }, 
+			   isGameOver { false }, pressedA { false }, pressedD { false }, 
+	           pressedJ{ false }, pressedK { false }, friction { 32.f }, 
+			   event{}
 {
 	try {
 		if (!road.loadFromFile("graphics/px_roadstar.png"))

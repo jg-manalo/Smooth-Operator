@@ -9,7 +9,8 @@
 #include <iostream>
 #include <array>
 
-Car::Car() : speed{ 0.f }, deltaX{ 0.f }, deltaY{ 0.f }, friction{ 32.f }, acceleration{ 10.f } {
+Car::Car() : speed{ 0.f }, deltaX{ 0.f }, deltaY{ 0.f }, friction{ 32.f }, acceleration{ 10.f } 
+{
 	
 	try {
 		if (!carSkin.loadFromFile("graphics/car.png"))
