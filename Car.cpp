@@ -5,11 +5,11 @@
 #include <random>
 #include <cstdlib>
 #include <cstdint>
+#include <stdexcept>
 #include <iostream>
-#include <iomanip>
 #include <array>
 
-Car::Car() : speed{ 50.f }, deltaX{ 0.f }, deltaY{ 0.f }, friction{ 32.f }, acceleration{ 10.f } {
+Car::Car() : speed{ 0.f }, deltaX{ 0.f }, deltaY{ 0.f }, friction{ 32.f }, acceleration{ 10.f } {
 	
 	try {
 		if (!carSkin.loadFromFile("graphics/car.png"))
@@ -25,8 +25,7 @@ Car::Car() : speed{ 50.f }, deltaX{ 0.f }, deltaY{ 0.f }, friction{ 32.f }, acce
 			throw std::runtime_error("Could not load brake.mp3");
 	}
 	catch (const std::exception& error) {
-	
-		std::cout << "Error: " << error.what();
+		std::cerr << "Error: " << error.what();
 	}
 
 	this->carShape.setPosition(STARTING_PLAYER_XPOSITION, STARTING_PLAYER_YPOSITION);
@@ -78,18 +77,24 @@ Coordinate Car::randomizer() {
 }
 
 float Car::steerAction(const float& speed, float& deltaX, const float& acceleration, sf::Time& deltaTime, const float& pressedA, const float& pressedD) {
+	
 	if (speed > 0) {
 		if (pressedA)
-			deltaX -=  1 * deltaTime.asSeconds();
+			deltaX -=  (speed  * deltaTime.asSeconds()) / acceleration;
 		else if (pressedD)
-			deltaX +=  1 * deltaTime.asSeconds();
+			deltaX += (speed * deltaTime.asSeconds()) / acceleration;
 	}
 	return deltaX;
 }
 
 float Car::accelerate(float& speed){
 	speed += 0.5f;
-	return speed = (speed > 150.f) ? speed = 150.f : speed;
+	return speed = (speed > 350.f) ? speed = 350.f : speed;
+}
+
+float Car::decelerate(float& speed){
+	speed -= 0.5f;
+	return speed = (speed < 0.f)? speed = 0.f : speed;
 }
 
 float Car::musicVolumeControl(float& musicVolume){

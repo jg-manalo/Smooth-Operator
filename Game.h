@@ -4,10 +4,11 @@
 #include "dimension.h"
 #include "Car.h"
 #include "Hurdle.h"
+#include <SFML/System.hpp>
+#include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <cstdint>
-#include <array>
 
 class Game
 {
@@ -49,9 +50,6 @@ private:
 	//player and enemy
 	Car* hurdle = nullptr;
 	Car* player = nullptr;
-
-	//icon
-	sf::Image icon;
 
 	//score and mechanics
 	float friction;

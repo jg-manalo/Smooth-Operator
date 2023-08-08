@@ -22,6 +22,7 @@ public:
 
 	float steerAction(const float& speed, float& deltaX, const float& acceleration, sf::Time& deltaTime, const float& pressedA, const float& pressedD);
 	float accelerate(float& speed);
+	float decelerate(float& speed);
 	float musicVolumeControl(float& musicVolume);
 
 public:

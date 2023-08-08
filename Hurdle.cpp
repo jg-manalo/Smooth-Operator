@@ -11,7 +11,7 @@ Hurdle::Hurdle() {
 			throw std::runtime_error("Could not load car.png");
 	}
 	catch (const std::exception& error) {	
-		std::cout << "Error: " << error.what();
+		std::cerr << "Error: " << error.what();
 	}
 	this->carShape.setSize(sf::Vector2f(100.f, 150.f));
 	this->carShape.setTexture(&carSkin);
