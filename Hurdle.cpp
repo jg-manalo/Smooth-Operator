@@ -1,32 +1,24 @@
+#include "Game.h"
+#include "Car.h"
 #include "Hurdle.h"
 #include <random>
 #include <array>
+#include <iostream>
+#include <stdexcept>
 
-
-//randomizing location of coordinates
-Coordinate Hurdle::randomizer() {
-	Coordinate result;
-	// This is a personal academic project. Dear PVS-Studio, please check it.
-
-	// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
-	std::random_device rd;
-	std::mt19937 generator(rd());
-	std::uniform_real_distribution<float> distribution(0.f, 650.f);
-
-	std::array<float, 3> yCoord = { 0.f , -100.f, -200.f };
-	int selectY = std::rand() % 3;
-
-	result.x = distribution(generator);;
-	result.y = yCoord[selectY];
-	return result;
-}
-
-Hurdle::Hurdle() {
+Hurdle::Hurdle()
+{
+	try {
+		if (!carSkin.loadFromFile("graphics/car.png"))
+			throw std::runtime_error("Could not load car.png");
+	}
+	catch (const std::exception& error) {	
+		std::cerr << "Error: " << error.what();
+	}
+	this->carShape.setSize(sf::Vector2f(100.f, 150.f));
+	this->carShape.setTexture(&carSkin);
+	this->carShape.setFillColor(sf::Color::Cyan);
 	Coordinate random = randomizer();
-	this->hurdle.loadFromFile("graphics/car.png");
-	this->hurdleShape.setFillColor(sf::Color::Cyan);
-	this->hurdleShape.setSize(sf::Vector2f(100.f, 150.f));
-	this->hurdleShape.setTexture(&hurdle);
-	this->hurdleShape.setPosition(random.x, -200.f);
+	this->carShape.setPosition(random.x, -200.f);
 }
+

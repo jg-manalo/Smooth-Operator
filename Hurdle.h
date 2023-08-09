@@ -1,21 +1,15 @@
-#pragma once
+#ifndef HURDLE_H
+#define HURDLE_H
+
+#include "Car.h"
 #include <SFML/Graphics.hpp>
-
-// This is a personal academic project. Dear PVS-Studio, please check it.
-
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+#include <sstream>
 
 
-struct Coordinate {
-	float x;
-	float y;
-};
-
-class Hurdle{
+class Hurdle :  public Car {
 public:
 	Hurdle();
-	sf::Texture hurdle;
-	sf::RectangleShape hurdleShape;
-	Coordinate randomizer();
 };
 
+
+#endif

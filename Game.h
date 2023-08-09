@@ -1,61 +1,61 @@
-#pragma once
+#ifndef GAME_H
+#define GAME_H
+
 #include "dimension.h"
+#include "Car.h"
 #include "Hurdle.h"
-#include "Player.h"
+#include <SFML/System.hpp>
+#include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
-#include <array>
+#include <cstdint>
 
 class Game
 {
 private:
-	//private var
-	sf::RenderWindow* window = nullptr;
+	//window and event
+	sf::RenderWindow window;
 	sf::VideoMode videoMode;
 	sf::Event event;
 
-	//physics
-	float speed;
-	const float acceleration;
-	float deltaX;
-	float deltaY;
-	float backgroundLocation = -SCREEN_HEIGHT;// comes from the predetermined value
-
 	//boolean var for user input
-	bool pressedA;	
+	bool pressedA;
 	bool pressedD;
 	bool pressedJ;
 	bool pressedK;
+
+	//physics
+	float backgroundLocation = -SCREEN_HEIGHT;// comes from the predetermined value
 	
-	//Road bg
+	//Road backrgound
 	sf::Texture road;
 	sf::Sprite background;
 	
 	//menu trigger
 	bool atMenu;
 	bool isGameOver;
-	//audio
-	sf::SoundBuffer buffer;
-	sf::Sound crash;
+
+	//game audio
 	sf::Music music;
 	float musicVolume;
 
-	//fonts
-	sf::Font font;
+	//fonts & texts
 	sf::Text scoreCard;
 	sf::Text speedometer;
 	sf::Text titleScreen;
 	sf::Text gameOver;
-	//player and enemy
-	Hurdle* hurdle;
-	Player* player;
+	sf::Font font;
 
-	//icon
-	sf::Image icon;
+
+	//player and enemy
+	Car* hurdle = nullptr;
+	Car* player = nullptr;
 
 	//score and mechanics
 	float friction;
-	unsigned long int score;
+	uint32_t score;
+	uint32_t maxScore;
+
 private: // game settings
 	void processEvents();
 	void update(sf::Time deltaTime, const float screenWidth, const float screenHeight);
@@ -66,13 +66,7 @@ private: // game settings
 	void renderGameplay();
 	void renderGameOver();
 	void resetState(bool& atMenu, bool& isGameOver);
-private: //car behaviors
-	float steerAction(float& speed, float& deltaX,const float& acceleration, sf::Time& deltaTime);
-	float accelerate(float& speed);
-	float musicVolumeControl(float& musicVolume);
-	void crashedSound();
 public:
-	//constructor/destructor
 	Game();
 	~Game();
 
@@ -81,3 +75,4 @@ public:
 	void userInput(sf::Keyboard::Key key, bool isPressed); //checked if there any input from user
 	void run(); 
 };
+#endif

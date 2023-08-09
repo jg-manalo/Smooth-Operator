@@ -1,76 +1,122 @@
 // This is a personal academic project. Dear PVS-Studio, please check it.
-
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 #include "dimension.h"
 #include "Game.h"
-#include "Player.h"
-#include "Hurdle.h"
-#include<iostream>
 #include <sstream>
-#include <Windows.h>
-#include<SFML/Graphics.hpp>
-#include<SFML/Audio.hpp>
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <stdexcept>
+#include <limits>
+#include <cmath>
 
+using std::this_thread::sleep_for;
+using std::chrono::seconds;
+using std::numeric_limits;
 
-
-
-//constructor and destructor
-Game::Game() : speed{ 0.f }, acceleration{ 10.f }, deltaX{ 0.f }, deltaY{ 0.f }, 
-			   score{ 0 }, musicVolume{ 0.f }, atMenu{ true }, friction {32.f},
-			   isGameOver { false }, pressedA{false}, pressedD{false}, 
-			   pressedJ{ false }, pressedK {false}
+/*the limit of uint32 is reduced by one, to avoid prematurely setting the score at 0
+ . Making it to trigger the resetState functionality first */
+Game::Game() : score { 0 }, musicVolume { 0.f } , atMenu { true },
+			   isGameOver { false }, pressedA { false }, pressedD { false }, 
+	           pressedJ{ false }, pressedK { false }, friction { 32.f }, 
+			   event{}, maxScore {std::numeric_limits<uint32_t>::max() - 1}
 {
-	this->videoMode.height = SCREEN_HEIGHT;
-	this->videoMode.width = SCREEN_WIDTH;
-	this->window = new sf::RenderWindow(this -> videoMode, "Smooth Operator",
-										sf::Style::Titlebar | sf::Style::Close);
+	try {
+		if (!road.loadFromFile("graphics/px_roadstar.png"))
+			throw std::runtime_error("Could not load px_roadstar.png");
+		
+		if (!font.loadFromFile("fonts/racing.ttf"))
+			throw std::runtime_error("Could not load racing.ttf");
+		
+		if (!music.openFromFile("sounds/cimh.mp3"))
+			throw std::runtime_error("Could not load cimh.mp3");
+	}
+	catch (const std::exception& error) {
+		std::cerr << "Error: " << error.what();
+	}
+	
+	this->videoMode.height = static_cast<uint32_t>(SCREEN_HEIGHT);
+	this->videoMode.width = static_cast<uint32_t>(SCREEN_WIDTH);
+	this->window.create(videoMode, "Smooth Operator", sf::Style::Titlebar | sf::Style::Close);
+	
+	this->window.setFramerateLimit(60);
 
+	this->background.setTexture(road);
 	
-	this->icon.loadFromFile("graphics/leo.png");
-	this->window->setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
-	this->window->setFramerateLimit(60);
-	this->player = new Player();
-	this->hurdle = new Hurdle();
-	this->music.openFromFile("sounds/cimh.mp3");
-	this->font.loadFromFile("fonts/racing.ttf");
+	this->player = new Car(); //creates a player object
+	this->hurdle = new Hurdle(); //creates a hurdle object 
+	
+
+
+	this->titleScreen.setFont(font);
+	this->titleScreen.setCharacterSize(50);
+	this->titleScreen.setString("Play Now");
+	this->titleScreen.setPosition(SCREEN_WIDTH_HALVED - 100.f, SCREEN_HEIGHT_HALVED - 100.f);
+
+
 	this->scoreCard.setFont(font);
+	this->scoreCard.setCharacterSize(24);
+	this->scoreCard.setPosition(25.f, 0.f);
+
 	this->speedometer.setFont(font);
-	this->speedometer.setPosition(550.f, 0.f);
-	this->scoreCard.setPosition(50.f, 0.f);
-	
+	this->speedometer.setCharacterSize(24);
+	this->speedometer.setPosition(SCREEN_WIDTH - 175.f, 0.f);
+
+	this->gameOver.setFont(font);
+	this->gameOver.setCharacterSize(50);
+	this->gameOver.setPosition(SCREEN_WIDTH_HALVED - (this->gameOver.getCharacterSize() * 2), 
+							  SCREEN_HEIGHT_HALVED - (this->gameOver.getCharacterSize() * 2));
 }
 
 Game::~Game() {
 	delete this->player;
 	delete this->hurdle;
-	delete this->window;
 	player = nullptr;
 	hurdle = nullptr;
-	window = nullptr;
 }
 
 
-void Game::renderMenu(){
-	titleScreen.setFont(font);
-	titleScreen.setString("Play Now");
-	titleScreen.setPosition(SCREEN_WIDTH_HALVED - 100, SCREEN_HEIGHT_HALVED - 100);
-	titleScreen.setCharacterSize(50);
-	this->window->clear();
-	this->window->draw(titleScreen);
-	this->window->display();
+void Game::resetState(bool& atMenu, bool& isGameOver) {
+	isGameOver = false;
+	atMenu = true;
+	this->pressedJ = false; //makes sure that the gas pedal is not stepped on to avoid premature increment of the score
+	player->deltaX = 0.f;
+	player->speed = 0.f;
+	player->drivingSoundPauseFX();
+	Coordinate reset = this->hurdle->randomizer();
+	this->hurdle->carShape.setPosition(reset.x, reset.y);
+	this->player->carShape.setPosition(STARTING_PLAYER_XPOSITION, STARTING_PLAYER_YPOSITION);
+	this->friction = 32.f;
+	this->score = 0;
 }
 
-//background init
-void Game::renderBackground() {
-	this->road.loadFromFile("graphics/px_roadstar.png");
-	this->background.setTexture(road);
-	background.setPosition(0.f, backgroundLocation);
-	this->window->draw(this->background);
+//event handler
+void Game::processEvents(){
+	while (this->window.pollEvent(this->event)) {
+		switch (this->event.type) {
+			case sf::Event::Closed:
+				this->window.close();
+				break;
+			case sf::Event::KeyPressed:
+				if (this->event.key.code == sf::Keyboard::Escape)
+					this->window.close();
+				else if (this->event.key.code == sf::Keyboard::Enter)
+					atMenu = false;
+				userInput(event.key.code, true);
+				break;
+			case sf::Event::KeyReleased:
+				if (this->event.key.code == sf::Keyboard::Escape)
+					this->window.close();
+				userInput(event.key.code, false);
+				break;
+			}
+
+	}
 }
 
 //runner drive
 const bool Game::isRunning() const{
-	return this->window->isOpen();
+	return this->window.isOpen();
 }
 
 void Game::run() {
@@ -87,34 +133,11 @@ void Game::run() {
 		}
 		else{
 			renderGameOver();
-			resetState(atMenu, isGameOver);
+			resetState(this->atMenu, this->isGameOver);
 		}
 	}
 }
 
-//event handler
-void Game::processEvents(){
-	while (this->window->pollEvent(this->event)) {
-		switch (this->event.type) {
-			case sf::Event::Closed:
-				this->window->close();
-				break;
-			case sf::Event::KeyPressed:
-				if (this->event.key.code == sf::Keyboard::Escape)
-					this->window->close();
-				else if (this->event.key.code == sf::Keyboard::Enter)
-					atMenu = false;
-				userInput(event.key.code, true);
-				break;
-			case sf::Event::KeyReleased:
-				if (this->event.key.code == sf::Keyboard::Escape)
-					this->window->close();
-				userInput(event.key.code, false);
-				break;
-			}
-
-	}
-}
 
 //user input handler
 void Game::userInput(sf::Keyboard::Key key, bool isPressed) {
@@ -128,171 +151,148 @@ void Game::userInput(sf::Keyboard::Key key, bool isPressed) {
 		pressedK = isPressed;
 }
 
-//disisGameOver score
+//game logic
+void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight){
+	const sf::Vector2f playerSize = player->carShape.getSize();
+	sf::Vector2f playerPosition   = player->carShape.getPosition();
+	sf::Vector2f enemyPosition    = hurdle->carShape.getPosition();
+	sf::FloatRect playerBounds    = player->carShape.getGlobalBounds();
+	sf::FloatRect enemyBounds     = hurdle->carShape.getGlobalBounds();
+
+
+	//score update and difficulty increase mechanism
+	try {
+		if (this->score > maxScore){
+			throw std::runtime_error("Reached Maximum Score limit");
+		}
+		else if (this->score == 1000) {
+			//the music will be heard while the player is accelerating
+			this->music.play();
+			this->music.setVolume(0.f);
+			this->music.setLoop(true);
+		}
+		else if (this->score == 5000) {
+			this->friction /= 2.f;
+		}
+		else if (this->score == 23000) {
+			this->friction /= 2.f;
+			hurdle->speed *= 2.f;
+		}
+		else if (this->score == 50000) {
+			this->friction /= 2.f;
+		}
+	}
+	catch (const std::exception& error){
+		std::cerr << "Okay okay... You\'ve won: " << error.what() << '\n';
+		resetState(this->atMenu, this->isGameOver);
+	}
+
+	if (this->pressedJ && !this->isGameOver){
+		player->accelerate(player->speed);
+		hurdle->accelerate(hurdle->speed);
+		player->musicVolumeControl(musicVolume);
+		this->score += 20;
+	}
+
+	else{
+		if (this->pressedK && !this->isGameOver) {
+			//break mechanism
+			player->brakingSoundFX();
+			//when braking, player's deltaX is counteracted by its equilibrant deltaX
+			player->deltaX -= (player->deltaX > 0) ? player->deltaX  : player->deltaX = 0.f;
+		}
+
+		player->decelerate(player->speed);
+		
+		this->musicVolume -= (musicVolume < 0.f) ? musicVolume = 0.f : musicVolume = 0.5f;
+	}
+	
+	//player car's steering mechanism
+	player->steerAction(player->speed, player->deltaX, player->speedMultiplier, deltaTime, pressedA, pressedD);
+	
+	//background scrolls when the player starts moving
+	backgroundLocation += player->speed * deltaTime.asSeconds() * player->speedMultiplier;
+	
+	//background scrolling limiter
+	backgroundLocation = (backgroundLocation > 0) ? backgroundLocation = -screenHeight : backgroundLocation;
+	this->background.setPosition(0, backgroundLocation);
+	
+	//player and hurdle collision detection
+	if (playerBounds.intersects(enemyBounds)) {
+		this->music.stop();
+		player->crashedSoundFX();
+		player->drivingSoundPauseFX();
+		sleep_for(seconds(1));
+		isGameOver = true;
+	}
+
+	//driving sound detector
+	if (player->speed == 1.f) {
+		player->drivingSoundFX();
+	}
+	else if (player->speed == 0.f) {
+		player->drivingSoundPauseFX();
+	}
+	
+	//window bounds collision detection of the player
+	if (playerBounds.left + player->deltaX < 0)
+		player->deltaX = -playerBounds.left;
+	else if (playerBounds.left > screenWidth - playerSize.x)
+		player->deltaX = screenWidth - playerSize.x - playerBounds.left;
+
+	//enemy position window bounds detection
+	if (enemyPosition.y > screenHeight) {
+		Coordinate reset = hurdle->randomizer();
+		hurdle->carShape.setPosition(reset.x, reset.y);
+	}
+
+	//character movement and volume control
+	this->player->carShape.move(player->deltaX, 0.f);
+	this->music.setVolume(player->speed);
+
+	//hurdle movement control
+	float deltaY = 0;
+	deltaY += player->speed / this->friction * deltaTime.asSeconds() * hurdle->speedMultiplier;
+	hurdle->carShape.move(0, deltaY);
+}
+
+void Game::renderMenu(){
+	this->window.clear();
+	this->window.draw(titleScreen);
+	this->window.display();
+}
+void Game::renderBackground() {
+	window.draw(this->background);
+}
 void Game::renderScoreCard(){
 	std::ostringstream scoreDisplay;
 	scoreDisplay << "Score: " << score;
 	this->scoreCard.setString(scoreDisplay.str());
-	this->window->draw(this->scoreCard);
+	this->window.draw(this->scoreCard);
 }
-
-//disisGameOver speed
 void Game::renderSpeedometer() {
 	std::ostringstream speedDisplay;
-	speedDisplay << "Speed: " << speed << " kph";
+	speedDisplay << "Speed: " << player->speed << " kph";
 	this->speedometer.setString(speedDisplay.str());
-	this->window->draw(this->speedometer);
+	this->window.draw(this->speedometer);
 }
 
-
-//game logic
-void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight){
-	sf::Vector2f playerPos = player->playerShape.getPosition();
-	sf::FloatRect playerBounds = player->playerShape.getGlobalBounds();
-	sf::FloatRect enemyBounds = hurdle->hurdleShape.getGlobalBounds();
-	const sf::Vector2f playerSize = player->playerShape.getSize();
-
-
-	//score update and difficulty increase mechanism
-	if (score == 1000) {
-		this->music.play();
-		this->music.setVolume(0.f);
-		this->music.setLoop(true);
-	}
-	else if (score == 5000) {
-		friction /= 2.f;
-	}
-	else if (score == 23000) {
-		friction /= 2.f;
-	}
-	else if (score == 50000) {
-		friction /= 2.f;
-	}
-
-
-	if (pressedJ){
-		float deltaY = 0.f;
-		accelerate(speed);
-		musicVolumeControl(musicVolume);
-		backgroundLocation += speed * deltaTime.asSeconds() * acceleration;
-		deltaY += speed / friction * deltaTime.asSeconds() * acceleration;
-		hurdle->hurdleShape.move(0, deltaY);
-		score += 20;
-	}
-	else{
-		if (pressedK) {
-			player->brakingSound();
-			deltaX = 0.f;
-			speed -= 2.f;
-		}
-
-		speed -= 0.5f;
-		musicVolume--;
-
-		if (speed < 0 || musicVolume < 0) {
-			speed = 0.f;
-			musicVolume = 0.f;
-		}
-
-		backgroundLocation += speed * deltaTime.asSeconds() * acceleration;	
-	}
-	
-	steerAction(speed, deltaX, acceleration, deltaTime);
-
-	//background scrolling limiter
-	backgroundLocation = (backgroundLocation > 0) ? backgroundLocation = -screenHeight : backgroundLocation;
-	
-	//collision detection
-	if (playerBounds.intersects(enemyBounds)) {
-		this->music.stop();
-		player->drivingSoundPause();
-		crashedSound();
-		Sleep(1000);
-		isGameOver = true;
-	}
-
-
-	if (speed == 1.f) {
-		player->drivingSound();
-	}
-	else if (speed == 0.f) {
-		player->drivingSoundPause();
-	}
-	
-	if (playerBounds.left + deltaX < 0)
-		deltaX = -playerBounds.left;
-	else if (playerBounds.left > screenWidth - playerSize.x)
-		deltaX = screenWidth - playerSize.x - playerBounds.left;
-
-	if (hurdle->hurdleShape.getPosition().y > screenHeight) {
-		Coordinate reset = this->hurdle->randomizer();
-		this->hurdle->hurdleShape.setPosition(reset.x, reset.y);
-	}
-
-	//character movement
-	this->player->playerShape.move(deltaX, deltaY);
-	this->music.setVolume(musicVolume);
-}
-
-
-//renderer
 void Game::renderGameplay(){
-	this->window->clear();
-	renderBackground();
-    this->window->draw(hurdle->hurdleShape);
-	this->window->draw(player->playerShape);
+	this->window.clear();
+	this->window.draw(background);
+	this->window.draw(this->player->carShape);
+    this->window.draw(this->hurdle->carShape);
 	renderScoreCard();
 	renderSpeedometer();
-	this->window->display();
+	this->window.display();
 }
 
 void Game::renderGameOver(){
 	std::ostringstream displayYouLose;
 	displayYouLose << "You Lose!\nScore: " << score;
-	this->gameOver.setFont(font);
 	this->gameOver.setString(displayYouLose.str());
-	this->gameOver.setPosition(SCREEN_WIDTH_HALVED - 50.f, SCREEN_HEIGHT_HALVED - 50.f);
-	this->window->clear();
-	this->window->draw(gameOver);
-	this->window->display();
-	Sleep(5000);
-}
-
-void Game::resetState(bool& atMenu, bool& isGameOver){
-	atMenu = true;
-	deltaX = 0.f;
-	score = 0;
-	speed = 0.f;
-	player->drivingSoundPause();
-	Coordinate reset = this->hurdle->randomizer();
-	this->hurdle->hurdleShape.setPosition(reset.x, -200.f);
-	this->player->playerShape.setPosition(STARTING_PLAYER_XPOSITION, STARTING_PLAYER_YPOSITION);
-	friction = 32.f;
-	isGameOver  = false;
-}
-
-float Game::steerAction(float& speed, float& deltaX, const float& acceleration, sf::Time& deltaTime){
-	if (speed > 0) {
-		if (pressedA)
-			deltaX -= acceleration * deltaTime.asSeconds();
-		else if (pressedD)
-			deltaX += acceleration * deltaTime.asSeconds();
-	}
-	return deltaX;
-}
-
-float Game::accelerate(float& speed){
-	speed += 0.5f;
-	return speed = (speed > 350.f) ? speed = 350.f : speed;
-}
-
-float Game::musicVolumeControl(float& musicVolume){
-	musicVolume += 0.5f;
-	return musicVolume = (musicVolume > 100.f) ? musicVolume = 100.f : musicVolume; ;
-}
-
-void Game::crashedSound(){
-	this->buffer.loadFromFile("sounds/undertaker.mp3");
-	this->crash.setBuffer(buffer);
-	this->crash.play();
+	this->window.clear();
+	this->window.draw(gameOver);
+	this->window.display();
+	sleep_for(seconds(5));
 }
