@@ -5,7 +5,9 @@
 #include <array>
 #include <iostream>
 #include <stdexcept>
-Hurdle::Hurdle() {
+
+Hurdle::Hurdle()
+{
 	try {
 		if (!carSkin.loadFromFile("graphics/car.png"))
 			throw std::runtime_error("Could not load car.png");
@@ -19,3 +21,4 @@ Hurdle::Hurdle() {
 	Coordinate random = randomizer();
 	this->carShape.setPosition(random.x, -200.f);
 }
+

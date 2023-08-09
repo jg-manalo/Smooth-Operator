@@ -9,9 +9,6 @@
 class Hurdle :  public Car {
 public:
 	Hurdle();
-private: //hurdle assets handler
-	
-
 };
 
 

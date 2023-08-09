@@ -20,7 +20,7 @@ public:
 	void brakingSoundFX();
 	void crashedSoundFX();
 
-	float steerAction(const float& speed, float& deltaX, const float& acceleration, sf::Time& deltaTime, const float& pressedA, const float& pressedD);
+	float steerAction(const float& speed, float& deltaX, const float& speedMultiplier, sf::Time& deltaTime, const float& pressedA, const float& pressedD);
 	float accelerate(float& speed);
 	float decelerate(float& speed);
 	float musicVolumeControl(float& musicVolume);
@@ -38,7 +38,7 @@ private:
 
 public: //physics variables
 	float speed;
-	const float acceleration;
+	const float speedMultiplier;
 	float deltaX;
 	float deltaY;
 	float friction;

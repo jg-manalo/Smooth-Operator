@@ -54,6 +54,7 @@ private:
 	//score and mechanics
 	float friction;
 	uint32_t score;
+	uint32_t maxScore;
 
 private: // game settings
 	void processEvents();

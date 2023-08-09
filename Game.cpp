@@ -7,15 +7,19 @@
 #include <thread>
 #include <chrono>
 #include <stdexcept>
+#include <limits>
+#include <cmath>
 
 using std::this_thread::sleep_for;
 using std::chrono::seconds;
+using std::numeric_limits;
 
-//constructor and destructor
-Game::Game() : score { 0 }, musicVolume { 0.f } , atMenu { true }, 
+/*the limit of uint32 is reduced by one, to avoid prematurely setting the score at 0
+ . Making it to trigger the resetState functionality first */
+Game::Game() : score { 0 }, musicVolume { 0.f } , atMenu { true },
 			   isGameOver { false }, pressedA { false }, pressedD { false }, 
 	           pressedJ{ false }, pressedK { false }, friction { 32.f }, 
-			   event{}
+			   event{}, maxScore {std::numeric_limits<uint32_t>::max() - 1}
 {
 	try {
 		if (!road.loadFromFile("graphics/px_roadstar.png"))
@@ -43,14 +47,25 @@ Game::Game() : score { 0 }, musicVolume { 0.f } , atMenu { true },
 	this->hurdle = new Hurdle(); //creates a hurdle object 
 	
 
+
+	this->titleScreen.setFont(font);
+	this->titleScreen.setCharacterSize(50);
+	this->titleScreen.setString("Play Now");
+	this->titleScreen.setPosition(SCREEN_WIDTH_HALVED - 100.f, SCREEN_HEIGHT_HALVED - 100.f);
+
+
 	this->scoreCard.setFont(font);
+	this->scoreCard.setCharacterSize(24);
 	this->scoreCard.setPosition(25.f, 0.f);
 
 	this->speedometer.setFont(font);
-	this->speedometer.setPosition(SCREEN_WIDTH - 200.f, 0.f);
+	this->speedometer.setCharacterSize(24);
+	this->speedometer.setPosition(SCREEN_WIDTH - 175.f, 0.f);
 
 	this->gameOver.setFont(font);
-	this->gameOver.setPosition(SCREEN_WIDTH_HALVED - 50.f, SCREEN_HEIGHT_HALVED);
+	this->gameOver.setCharacterSize(50);
+	this->gameOver.setPosition(SCREEN_WIDTH_HALVED - (this->gameOver.getCharacterSize() * 2), 
+							  SCREEN_HEIGHT_HALVED - (this->gameOver.getCharacterSize() * 2));
 }
 
 Game::~Game() {
@@ -60,6 +75,20 @@ Game::~Game() {
 	hurdle = nullptr;
 }
 
+
+void Game::resetState(bool& atMenu, bool& isGameOver) {
+	isGameOver = false;
+	atMenu = true;
+	this->pressedJ = false; //makes sure that the gas pedal is not stepped on to avoid premature increment of the score
+	player->deltaX = 0.f;
+	player->speed = 0.f;
+	player->drivingSoundPauseFX();
+	Coordinate reset = this->hurdle->randomizer();
+	this->hurdle->carShape.setPosition(reset.x, reset.y);
+	this->player->carShape.setPosition(STARTING_PLAYER_XPOSITION, STARTING_PLAYER_YPOSITION);
+	this->friction = 32.f;
+	this->score = 0;
+}
 
 //event handler
 void Game::processEvents(){
@@ -104,7 +133,7 @@ void Game::run() {
 		}
 		else{
 			renderGameOver();
-			resetState(atMenu, isGameOver);
+			resetState(this->atMenu, this->isGameOver);
 		}
 	}
 }
@@ -124,42 +153,49 @@ void Game::userInput(sf::Keyboard::Key key, bool isPressed) {
 
 //game logic
 void Game::update(sf::Time deltaTime, const float screenWidth, const float screenHeight){
-	sf::Vector2f playerPos = player->carShape.getPosition();
-	sf::FloatRect playerBounds = player->carShape.getGlobalBounds();
-	sf::FloatRect enemyBounds = hurdle->carShape.getGlobalBounds();
 	const sf::Vector2f playerSize = player->carShape.getSize();
+	sf::Vector2f playerPosition   = player->carShape.getPosition();
+	sf::Vector2f enemyPosition    = hurdle->carShape.getPosition();
+	sf::FloatRect playerBounds    = player->carShape.getGlobalBounds();
+	sf::FloatRect enemyBounds     = hurdle->carShape.getGlobalBounds();
 
 
 	//score update and difficulty increase mechanism
-	if (score == 1000) {
-		//the music will be heard while the player is accelerating
-		this->music.play();
-		this->music.setVolume(0.f);
-		this->music.setLoop(true);
+	try {
+		if (this->score > maxScore){
+			throw std::runtime_error("Reached Maximum Score limit");
+		}
+		else if (this->score == 1000) {
+			//the music will be heard while the player is accelerating
+			this->music.play();
+			this->music.setVolume(0.f);
+			this->music.setLoop(true);
+		}
+		else if (this->score == 5000) {
+			this->friction /= 2.f;
+		}
+		else if (this->score == 23000) {
+			this->friction /= 2.f;
+			hurdle->speed *= 2.f;
+		}
+		else if (this->score == 50000) {
+			this->friction /= 2.f;
+		}
 	}
-	else if (score == 5000) {
-		this->friction /= 2.f;
-	}
-	else if (score == 23000) {
-		this->friction /= 2.f;
-		hurdle->speed *= 2.f;
-	}
-	else if (score == 50000) {
-		this->friction /= 2.f;
+	catch (const std::exception& error){
+		std::cerr << "Okay okay... You\'ve won: " << error.what() << '\n';
+		resetState(this->atMenu, this->isGameOver);
 	}
 
-
-	float deltaY = 0;
-	deltaY += player->speed / this->friction * deltaTime.asSeconds() * hurdle->acceleration;
-	hurdle->carShape.move(0, deltaY);
-	if (pressedJ){
+	if (this->pressedJ && !this->isGameOver){
 		player->accelerate(player->speed);
+		hurdle->accelerate(hurdle->speed);
 		player->musicVolumeControl(musicVolume);
-		score += 20;
+		this->score += 20;
 	}
 
 	else{
-		if (pressedK) {
+		if (this->pressedK && !this->isGameOver) {
 			//break mechanism
 			player->brakingSoundFX();
 			//when braking, player's deltaX is counteracted by its equilibrant deltaX
@@ -167,20 +203,21 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 		}
 
 		player->decelerate(player->speed);
+		
 		this->musicVolume -= (musicVolume < 0.f) ? musicVolume = 0.f : musicVolume = 0.5f;
 	}
 	
 	//player car's steering mechanism
-	player->steerAction(player->speed, player->deltaX, player->acceleration, deltaTime, pressedA, pressedD);
+	player->steerAction(player->speed, player->deltaX, player->speedMultiplier, deltaTime, pressedA, pressedD);
 	
 	//background scrolls when the player starts moving
-	backgroundLocation += player->speed * deltaTime.asSeconds() * player->acceleration;
+	backgroundLocation += player->speed * deltaTime.asSeconds() * player->speedMultiplier;
 	
 	//background scrolling limiter
 	backgroundLocation = (backgroundLocation > 0) ? backgroundLocation = -screenHeight : backgroundLocation;
 	this->background.setPosition(0, backgroundLocation);
 	
-	//collision detection
+	//player and hurdle collision detection
 	if (playerBounds.intersects(enemyBounds)) {
 		this->music.stop();
 		player->crashedSoundFX();
@@ -189,36 +226,38 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 		isGameOver = true;
 	}
 
-
-	if (this->player->speed == 1.f) {
+	//driving sound detector
+	if (player->speed == 1.f) {
 		player->drivingSoundFX();
 	}
 	else if (player->speed == 0.f) {
 		player->drivingSoundPauseFX();
 	}
 	
+	//window bounds collision detection of the player
 	if (playerBounds.left + player->deltaX < 0)
 		player->deltaX = -playerBounds.left;
 	else if (playerBounds.left > screenWidth - playerSize.x)
 		player->deltaX = screenWidth - playerSize.x - playerBounds.left;
 
-	
-	if (hurdle->carShape.getPosition().y > screenHeight) {
+	//enemy position window bounds detection
+	if (enemyPosition.y > screenHeight) {
 		Coordinate reset = hurdle->randomizer();
 		hurdle->carShape.setPosition(reset.x, reset.y);
 	}
 
-	//character movement
-	this->player->carShape.move(player->deltaX, 0);
+	//character movement and volume control
+	this->player->carShape.move(player->deltaX, 0.f);
 	this->music.setVolume(player->speed);
+
+	//hurdle movement control
+	float deltaY = 0;
+	deltaY += player->speed / this->friction * deltaTime.asSeconds() * hurdle->speedMultiplier;
+	hurdle->carShape.move(0, deltaY);
 }
 
 void Game::renderMenu(){
-	titleScreen.setFont(font);
-	titleScreen.setString("Play Now");
-	titleScreen.setPosition(SCREEN_WIDTH_HALVED - 100, SCREEN_HEIGHT_HALVED - 100);
-	titleScreen.setCharacterSize(50);
-	window.clear();
+	this->window.clear();
 	this->window.draw(titleScreen);
 	this->window.display();
 }
@@ -256,17 +295,4 @@ void Game::renderGameOver(){
 	this->window.draw(gameOver);
 	this->window.display();
 	sleep_for(seconds(5));
-}
-
-void Game::resetState(bool& inMenu, bool& isGameOver){
-	inMenu = true;
-	player->deltaX = 0.f;
-	score  = 0;
-	player->speed  = 0.f;
-	player->drivingSoundPauseFX();
-	Coordinate reset = this->hurdle->randomizer();
-	this->hurdle->carShape.setPosition(reset.x, -200.f);
-	this->player->carShape.setPosition(STARTING_PLAYER_XPOSITION, STARTING_PLAYER_YPOSITION);
-	friction = 32.f;
-	isGameOver  = false;
 }

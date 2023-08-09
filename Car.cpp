@@ -7,9 +7,8 @@
 #include <cstdint>
 #include <stdexcept>
 #include <iostream>
-#include <array>
 
-Car::Car() : speed{ 0.f }, deltaX{ 0.f }, deltaY{ 0.f }, friction{ 32.f }, acceleration{ 10.f } 
+Car::Car() : speed{ 0.f }, deltaX{ 0.f }, deltaY{ 0.f }, friction{ 32.f }, speedMultiplier{ 10.f } 
 {
 	
 	try {
@@ -69,36 +68,32 @@ Coordinate Car::randomizer() {
 	std::mt19937 generator(rd());
 	std::uniform_real_distribution<float> distribution(0.f, 650.f);
 
-	std::array<float, 3> yCoordinate = { 0.f , -100.f, -200.f };
-	uint32_t selectY = std::rand() % 3;
-
 	result.x = distribution(generator);;
-	result.y = yCoordinate[selectY];
+	result.y = -200.f;
 	return result;
 }
 
-float Car::steerAction(const float& speed, float& deltaX, const float& acceleration, sf::Time& deltaTime, const float& pressedA, const float& pressedD) {
+float Car::steerAction(const float& speed, float& deltaX, const float& speedMultiplier, sf::Time& deltaTime, const float& pressedA, const float& pressedD) {
 	
 	if (speed > 0) {
 		if (pressedA)
-			deltaX -=  (speed  * deltaTime.asSeconds()) / acceleration;
+			this->deltaX -=  (this->speed  * deltaTime.asSeconds()) / this->speedMultiplier;
 		else if (pressedD)
-			deltaX += (speed * deltaTime.asSeconds()) / acceleration;
+			this->deltaX += (this->speed * deltaTime.asSeconds()) / this->speedMultiplier;
 	}
-	return deltaX;
+	return this->deltaX;
 }
 
 float Car::accelerate(float& speed){
-	speed += 0.5f;
-	return speed = (speed > 350.f) ? speed = 350.f : speed;
+	this->speed += 0.5f;
+	return this->speed = (this->speed > 200.f)? this->speed = 200.f : this->speed;
 }
 
 float Car::decelerate(float& speed){
-	speed -= 0.5f;
-	return speed = (speed < 0.f)? speed = 0.f : speed;
+	this->speed -= 0.5f;
+	return this->speed = (this->speed < 0.f)? this->speed = 0.f : this->speed;
 }
 
 float Car::musicVolumeControl(float& musicVolume){
-	musicVolume += 0.5f;
-	return musicVolume = (musicVolume > 100.f) ? musicVolume = 100.f : musicVolume;
+	return musicVolume = (musicVolume > 100.f) ? musicVolume = 100.f : musicVolume += 0.5f;
 }
