@@ -12,8 +12,8 @@
 # Prerequisite
 ---
 Since it is intended for Windows Environment, make sure you have installed<br>
-<a href= "https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170"> Microsoft Visual C++ Redistributable
-</a>
+<a href= "https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170"> Microsoft Visual C++ Redistributable. </a>
+**Download the x86 since it is compiled originally at 32 bits.
 ---
 # Controls
 ---
