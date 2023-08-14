@@ -71,12 +71,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)\include\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\lib\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)\include\</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\;$(SolutionDir)\lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)\include\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\lib\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)\include\</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\;$(SolutionDir)\lib;$(LibraryPath)</LibraryPath>
     <TargetName>Smooth Operator</TargetName>
     <OutDir>$(SolutionDir)\</OutDir>
   </PropertyGroup>
@@ -91,9 +91,11 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\devgame\lib\;C:\msys64\mingw32\lib\</AdditionalLibraryDirectories>
       <AdditionalDependencies>sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;sfml-network-d.lib;sfml-audio-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

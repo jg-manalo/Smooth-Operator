@@ -1,8 +1,8 @@
 #ifndef CAR_H
 #define CAR_H
 
-#include<SFML/Graphics.hpp>
-#include<SFML/Audio.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 
 struct Coordinate {
 	float x;
