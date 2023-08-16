@@ -9,6 +9,7 @@
 class Hurdle :  public Car {
 public:
 	Hurdle();
+	virtual ~Hurdle();
 };
 
 

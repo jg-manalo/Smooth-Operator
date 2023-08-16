@@ -12,7 +12,7 @@ struct Coordinate {
 class Car{
 public:
 	Car();
-
+	virtual ~Car();
 	Coordinate randomizer();
 
 	void drivingSoundFX();

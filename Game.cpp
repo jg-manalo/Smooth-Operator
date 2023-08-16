@@ -73,6 +73,7 @@ Game::~Game() {
 	delete this->hurdle;
 	player = nullptr;
 	hurdle = nullptr;
+	std::cout << "Game Class Destructor Invoked\n";
 }
 
 

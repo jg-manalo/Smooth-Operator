@@ -38,6 +38,10 @@ Car::Car() : speed{ 0.f }, deltaX{ 0.f }, deltaY{ 0.f }, friction{ 32.f }, speed
 
 }
 
+Car::~Car(){
+	std::cout << "Car Class Destructor Invoked\n";
+}
+
 
 void Car::drivingSoundFX(){
 	this->drivingSound.setLoop(true);

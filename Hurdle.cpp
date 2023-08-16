@@ -22,3 +22,7 @@ Hurdle::Hurdle()
 	this->carShape.setPosition(random.x, -200.f);
 }
 
+Hurdle::~Hurdle(){
+	std::cout << "Hurdle Class Destructor Invoked\n";
+}
+
