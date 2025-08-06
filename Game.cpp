@@ -28,8 +28,8 @@ Game::Game() : score { 0 }, musicVolume { 0.f } , atMenu { true },
 		if (!font.loadFromFile("fonts/racing.ttf"))
 			throw std::runtime_error("Could not load racing.ttf");
 		
-		if (!music.openFromFile("sounds/cimh.mp3"))
-			throw std::runtime_error("Could not load cimh.mp3");
+		if (!music.openFromFile("sounds/smooth_operator.mp3"))
+			throw std::runtime_error("Could not load smooth_operator.mp3");
 	}
 	catch (const std::exception& error) {
 		std::cerr << "Error: " << error.what();
@@ -197,7 +197,7 @@ void Game::update(sf::Time deltaTime, const float screenWidth, const float scree
 
 	else{
 		if (this->pressedK && !this->isGameOver) {
-			//break mechanism
+			//brake mechanism
 			player->brakingSoundFX();
 			//when braking, player's deltaX is counteracted by its equilibrant deltaX
 			player->deltaX -= (player->deltaX > 0) ? player->deltaX  : player->deltaX = 0.f;

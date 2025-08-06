@@ -9,15 +9,15 @@
 Hurdle::Hurdle()
 {
 	try {
-		if (!carSkin.loadFromFile("graphics/car.png"))
-			throw std::runtime_error("Could not load car.png");
+		if (!carSkin.loadFromFile("graphics/f1_2.png"))
+			throw std::runtime_error("Could not load f1_2.png");
 	}
 	catch (const std::exception& error) {	
 		std::cerr << "Error: " << error.what();
 	}
 	this->carShape.setSize(sf::Vector2f(100.f, 150.f));
 	this->carShape.setTexture(&carSkin);
-	this->carShape.setFillColor(sf::Color::Cyan);
+	//this->carShape.setFillColor(sf::Color::Cyan);
 	Coordinate random = randomizer();
 	this->carShape.setPosition(random.x, -200.f);
 }

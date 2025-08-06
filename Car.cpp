@@ -12,13 +12,13 @@ Car::Car() : speed{ 0.f }, deltaX{ 0.f }, deltaY{ 0.f }, friction{ 32.f }, speed
 {
 	
 	try {
-		if (!carSkin.loadFromFile("graphics/car.png"))
-			throw std::runtime_error("Could not load car.png");
+		if (!carSkin.loadFromFile("graphics/f1.png"))
+			throw std::runtime_error("Could not load f1.png");
 
-		if (!crashedSoundBuffer.loadFromFile("sounds/undertaker.mp3"))
-			throw std::runtime_error("Could not load undertaker.mp3");
+		if (!crashedSoundBuffer.loadFromFile("sounds/crash.mp3"))
+			throw std::runtime_error("Could not load crash.mp3");
 
-		if (!driveSoundBuffer.loadFromFile("sounds/broom.mp3"))
+		if (!driveSoundBuffer.loadFromFile("sounds/v6.mp3"))
 			throw std::runtime_error("Could not load broom.mp3");
 
 		if (!brakeSoundBuffer.loadFromFile("sounds/brake.mp3"))
@@ -90,7 +90,7 @@ float Car::steerAction(const float& speed, float& deltaX, const float& speedMult
 
 float Car::accelerate(float& speed){
 	this->speed += 0.5f;
-	return this->speed = (this->speed > 200.f)? this->speed = 200.f : this->speed;
+	return this->speed = (this->speed > 335.f)? this->speed = 335.f : this->speed;
 }
 
 float Car::decelerate(float& speed){
